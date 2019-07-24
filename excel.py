@@ -64,6 +64,8 @@ class ExcelFileReadOnly:
             rows_data.append(row_data)
         return rows_data #[{"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name}]
 
+    def close(self):
+        self.wb.close()
 
 class ExcelFile(ExcelFileReadOnly):
 

@@ -146,11 +146,11 @@ def sync():
     decknm = config["deck"]
     for file in files:
         tag = file["tag"]
-        excel_file = ExcelFile(file["src"])
-        excel_file.load_file()
-        excel_rfile = ExcelFileReadOnly(file["src"])
-        excel_rfile.load_file()
-        notes_data = excel_rfile.read_file()
+        ef = ExcelFile(file["src"])
+        ef.load_file()
+        efr = ExcelFileReadOnly(file["src"])
+        efr.load_file()
+        notes_data = efr.read_file()
         sys.stderr.write("\nnumber of notes:" +str(len(notes_data)))
         for note_data in notes_data:
             if note_data["id"]:
@@ -159,13 +159,14 @@ def sync():
                     note = mw.col.getNote(note_id)
                 except:
                     note_id = create_note(note_data, tag, decknm)
-                    excel_file.set_id(note_data["row"], note_data["fields"], note_id)
+                    ef.set_id(note_data["row"], note_data["fields"], note_id)
                     note = mw.col.getNote(note_id)
                 sync_note(note, note_data, tag, high_tags)
             else:
                 sys.stderr.write("\nnoid:" + file["src"] + str(note_data["row"]))
                 note_id = create_note(note_data, tag, decknm)
-                excel_file.set_id(note_data["row"], note_data["fields"], note_id)
+                ef.set_id(note_data["row"], note_data["fields"], note_id)
+                ef.close()
             note_ids.append(note_id)
     sys.stderr.write("\nnumber of notes" + str(len(note_ids)))
     remove_notes(high_tags, note_ids)
@@ -200,5 +201,6 @@ def sync_init():
         ef.create_file()
         ef.write(notes[tag], models)
         ef.save()
+        ef.close()
     sys.stderr.write("done")
     mw.reset()
