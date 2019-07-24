@@ -17,6 +17,7 @@ def confirm_sync():
     confirm_label = "Sync"
     cancel_label = "Cancel"
     diag = askUserDialog("""
+<b> Excel -> Anki </b>
 The Anki Cards with selected tags will be replaced by data from Excel.
 
 Anki cards will be overwritten.
@@ -32,6 +33,7 @@ def confirm_init_sync():
     confirm_label = "Create"
     cancel_label = "Cancel"
     diag = askUserDialog("""
+<b>Anki -> Excel</b>
 Excel files will be created from existing Anki Cards with selected tags.
 """, [confirm_label, cancel_label])
     diag.setDefault(1)
@@ -49,11 +51,9 @@ Excel files will be created from existing Anki Cards with selected tags.
 def modify_menu():
     config = mw.addonManager.getConfig(ADDON_NAME)
     is_first = config["need_init_sync"]
-    if is_first:
-        label = "Create Excel Files"
-        action = create_action(label, confirm_init_sync)
-        mw.form.menuTools.addAction(action)   
-    else:
-        label = "Sync with Excel"
-        action = create_action(label, confirm_sync)
-        mw.form.menuTools.addAction(action)
+    label = "Anki -> Excel"
+    action = create_action(label, confirm_init_sync)
+    mw.form.menuTools.addAction(action)   
+    label = "Excel -> Anki"
+    action = create_action(label, confirm_sync)
+    mw.form.menuTools.addAction(action)
