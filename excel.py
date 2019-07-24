@@ -3,7 +3,6 @@ import sys
 
 from openpyxl import load_workbook, Workbook
 
-
 class ExcelFileReadOnly:
 
     def __init__(self, path):
@@ -85,7 +84,7 @@ class ExcelFile(ExcelFileReadOnly):
         self.ws = self.wb.worksheets[0]
         self.ws.title = "Anki Cards"
 
-    def write(self, notes, models):
+    def write(self, notes, models, col_width):
         ws = self.ws
         first_line = []
         headers = []
@@ -119,6 +118,11 @@ class ExcelFile(ExcelFileReadOnly):
             for n in range(len(val_row)):
                 ws.cell(row=crow, column=n+2).value = str(val_row[n])
             ws.cell(row=crow, column=len(model["flds"]) + 2).value = note.id
+        for x in range(len(col_width)):
+            cl = ws.cell(row=1, column=x+1)
+            if cl:
+                col = cl.column_letter
+                ws.column_dimensions[col].width = col_width[x]
 
     def save(self):
         dir = os.path.dirname(self.path)

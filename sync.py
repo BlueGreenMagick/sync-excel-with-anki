@@ -177,6 +177,7 @@ def sync():
 def sync_init():
     config = mw.addonManager.getConfig(ADDON_NAME)
     root_dir = config["directories"]
+    col_width = config["col-width"]
     high_tags = get_high_dirs()
     notes = {}
     models = model_data()
@@ -199,7 +200,7 @@ def sync_init():
         dir = os.path.join(root_dir, *dir_tree)
         ef = ExcelFile(dir)
         ef.create_file()
-        ef.write(notes[tag], models)
+        ef.write(notes[tag], models, col_width)
         ef.save()
         ef.close()
     sys.stderr.write("done")
