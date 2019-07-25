@@ -45,7 +45,7 @@ def get_excel_file_names(dirc):
 
 def get_high_dirs():
     config = mw.addonManager.getConfig(ADDON_NAME)
-    dir = config["directories"]
+    dir = config["directory"]
     high_dirs = []
     for name in os.listdir(dir):
         if os.path.isdir(os.path.join(dir, name)):
@@ -139,13 +139,13 @@ def model_data():
     return models
 
 
-def sync():
+def e2a_sync():
     config = mw.addonManager.getConfig(ADDON_NAME)
     note_ids = []
-    dirc = config["directories"]
+    dirc = config["directory"]
     files, high_tags = get_excel_file_names(dirc)
     sys.stderr.write("\nnumber of files:" + str(len(files)))
-    decknm = config["deck"]
+    decknm = config["new-deck"]
     for file in files:
         sys.stderr.write("\n path:" + file["src"])
         tag = file["tag"]
@@ -179,9 +179,9 @@ def sync():
     mw.reset()
 
 
-def sync_init():
+def a2e_sync():
     config = mw.addonManager.getConfig(ADDON_NAME)
-    root_dir = config["directories"]
+    root_dir = config["directory"]
     col_width = config["col-width"]
     high_tags = get_high_dirs()
     notes = {}
