@@ -145,13 +145,13 @@ def sync():
     sys.stderr.write("\nnumber of files:" + str(len(files)))
     decknm = config["deck"]
     for file in files:
+        sys.stderr.write("\n path:" + file["src"])
         tag = file["tag"]
         ef = ExcelFile(file["src"])
         ef.load_file()
         efr = ExcelFileReadOnly(file["src"])
         efr.load_file()
         notes_data = efr.read_file()
-        sys.stderr.write("\n path:" + file["src"])
         sys.stderr.write("\nnumber of notes:" +str(len(notes_data)))
         for note_data in notes_data:
             if note_data["id"]:
@@ -164,12 +164,12 @@ def sync():
                     note = mw.col.getNote(note_id)
                 sync_note(note, note_data, tag, high_tags)
             else:
-                sys.stderr.write("\nnoid:" + file["src"] + str(note_data["row"]))
+                sys.stderr.write("\ncreate card(row):" + str(note_data["row"]))
                 note_id = create_note(note_data, tag, decknm)
                 ef.set_id(note_data["row"], note_data["fields"], note_id)
                 ef.close()
             note_ids.append(note_id)
-    sys.stderr.write("\nnumber of notes" + str(len(note_ids)))
+    sys.stderr.write("\ntotal number of notes" + str(len(note_ids)))
     remove_notes(high_tags, note_ids)
     sys.stderr.write("\ndone")
     mw.reset()
@@ -198,6 +198,7 @@ def sync_init():
     for tag in notes:
         sys.stderr.write("\na tag done")
         dir_tree = tag.split("::")
+        dir_tree = list(filter(None, dir_tree))
         dir = os.path.join(root_dir, *dir_tree)
         ef = ExcelFile(dir)
         ef.create_file()
