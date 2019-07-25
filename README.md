@@ -22,15 +22,15 @@ After creating the directories, you can go back to Anki and click Anki -> Excel.
 ### Excel File Format
 **1st row**: Names of note types.
 
-**2nd row~**: note-type-rows. Each row represents one note type.
-&nbsp; &nbsp; **1st column**: id of note type. Can be any sequence of letters.
-&nbsp; &nbsp; **2nd column~**: name of fields in note type. 
-&nbsp; &nbsp; &nbsp; &nbsp; *Must be the same as the name of fields of note type in Anki, or it will not work.
+**2nd row~**: note-type-rows. Each row represents one note type.<br>
+&nbsp; &nbsp; **1st column**: id of note type. Can be any sequence of letters.<br>
+&nbsp; &nbsp; **2nd column~**: name of fields in note type. <br>
+&nbsp; &nbsp; &nbsp; &nbsp; *Must be the same as the name of fields of note type in Anki, or it will not work.<br>
 
-**n+2 row~**: note-rows. Each row represents one note.
-&nbsp; &nbsp; **1st column**: id of this note's note type
-&nbsp; &nbsp; **2nd column**: value for each fields. 
-&nbsp; &nbsp; &nbsp; &nbsp; *The order must be the same as the order specified in the note-type-row. 
-&nbsp; &nbsp; &nbsp; &nbsp; *You can leave it blank if you want.
-&nbsp; &nbsp; **Last column**: note id in Anki. 
-&nbsp; &nbsp; &nbsp; &nbsp; *The addon will automatically fill this cell in, so there is no need to put anything here.
+**n+2 row~**: note-rows. Each row represents one note.<br>
+&nbsp; &nbsp; **1st column**: id of this note's note type<br>
+&nbsp; &nbsp; **2nd column**: value for each fields. <br>
+&nbsp; &nbsp; &nbsp; &nbsp; *The order must be the same as the order specified in the note-type-row. <br>
+&nbsp; &nbsp; &nbsp; &nbsp; *You can leave it blank if you want.<br>
+&nbsp; &nbsp; **Last column**: note id in Anki. <br>
+&nbsp; &nbsp; &nbsp; &nbsp; *The addon will automatically fill this cell in, so there is no need to put anything here.<br>
