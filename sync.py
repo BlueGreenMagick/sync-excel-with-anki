@@ -151,6 +151,7 @@ def sync():
         efr = ExcelFileReadOnly(file["src"])
         efr.load_file()
         notes_data = efr.read_file()
+        sys.stderr.write("\n path:" + file["src"])
         sys.stderr.write("\nnumber of notes:" +str(len(notes_data)))
         for note_data in notes_data:
             if note_data["id"]:
