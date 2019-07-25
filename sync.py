@@ -161,6 +161,7 @@ def sync():
                 try:
                     note = mw.col.getNote(note_id)
                 except:
+                    sys.stderr.write("\ninvalid id, create card(row):" + str(note_data["row"]))
                     note_id = create_note(note_data, tag, decknm)
                     ef.set_id(note_data["row"], note_data["fields"], note_id)
                     note = mw.col.getNote(note_id)
@@ -169,8 +170,9 @@ def sync():
                 sys.stderr.write("\ncreate card(row):" + str(note_data["row"]))
                 note_id = create_note(note_data, tag, decknm)
                 ef.set_id(note_data["row"], note_data["fields"], note_id)
-                ef.close()
             note_ids.append(note_id)
+        ef.save()
+        ef.close()
     sys.stderr.write("\ntotal number of notes" + str(len(note_ids)))
     remove_notes(high_tags, note_ids)
     sys.stderr.write("\ndone")
@@ -202,10 +204,11 @@ def sync_init():
         dir_tree = tag.split("::")
         dir_tree = list(filter(None, dir_tree))
         dir = os.path.join(root_dir, *dir_tree)
+        dir += ".xlsx"
         ef = ExcelFile(dir)
         ef.create_file()
         ef.write(notes[tag], models, col_width)
         ef.save()
         ef.close()
-    sys.stderr.write("done")
+    sys.stderr.write("\ndone")
     mw.reset()

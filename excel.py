@@ -134,4 +134,4 @@ class ExcelFile(ExcelFileReadOnly):
         dir = os.path.dirname(self.path)
         if not os.path.exists(dir):
             os.makedirs(dir)
-        self.wb.save(filename=self.path + ".xlsx")
+        self.wb.save(filename=self.path)
