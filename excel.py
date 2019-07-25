@@ -3,6 +3,7 @@ import sys
 
 from openpyxl import load_workbook, Workbook
 
+
 class ExcelFileReadOnly:
 
     def __init__(self, path):
@@ -21,7 +22,7 @@ class ExcelFileReadOnly:
         models = []
         models_fields = []
         models_ids = []
-        for row in ws.iter_rows(min_row=1, max_row = 1):
+        for row in ws.iter_rows(min_row=1, max_row=1):
             models_data = row
         for model in models_data:
             if model.value:
@@ -64,10 +65,12 @@ class ExcelFileReadOnly:
                 else:
                     row_data["fields"][model_fields[i]] = None
             rows_data.append(row_data)
-        return rows_data #[{"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name}]
+        # [{"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name}]
+        return rows_data
 
     def close(self):
         self.wb.close()
+
 
 class ExcelFile(ExcelFileReadOnly):
 
@@ -78,7 +81,7 @@ class ExcelFile(ExcelFileReadOnly):
         self.wsv = ws.values
 
     def set_id(self, row, fields, id):
-        self.ws.cell(row,len(fields)+2).value = id
+        self.ws.cell(row, len(fields)+2).value = id
         #cell = self.ws["A" + str(row_num)]
         #cell.value = id
 

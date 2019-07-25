@@ -8,10 +8,12 @@ from sync import sync, sync_init
 
 ADDON_NAME = "sync-excel-with-anki"
 
+
 def create_action(name, handler):
     action = QAction(name, mw)
     action.triggered.connect(handler)
     return action
+
 
 def confirm_sync():
     confirm_label = "Sync"
@@ -29,6 +31,7 @@ Anki cards will be overwritten.
     elif ret == cancel_label:
         return
 
+
 def confirm_init_sync():
     confirm_label = "Create"
     cancel_label = "Cancel"
@@ -44,16 +47,16 @@ Excel files will be created from existing Anki Cards with selected tags.
         cnfg["need_init_sync"] = False
         mw.addonManager.writeConfig(ADDON_NAME, cnfg)
 
-
     elif ret == cancel_label:
         return
+
 
 def modify_menu():
     config = mw.addonManager.getConfig(ADDON_NAME)
     is_first = config["need_init_sync"]
     label = "Anki -> Excel"
     action = create_action(label, confirm_init_sync)
-    mw.form.menuTools.addAction(action)   
+    mw.form.menuTools.addAction(action)
     label = "Excel -> Anki"
     action = create_action(label, confirm_sync)
     mw.form.menuTools.addAction(action)

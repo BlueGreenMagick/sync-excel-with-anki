@@ -13,6 +13,7 @@ from excel import ExcelFile, ExcelFileReadOnly
 
 ADDON_NAME = "sync-excel-with-anki"
 
+
 def excel_files_in_dir(directory):
     high_tags = []
     file_list = []
@@ -60,6 +61,7 @@ def prepare_field_val(val):
     txt = mw.col.media.escapeImages(txt, unescape=True)
     return txt
 
+
 def sync_note(note, note_data, otag, high_tags):
     #sys.stderr.write("\ntag:" + otag)
     fields = note_data["fields"]
@@ -78,11 +80,12 @@ def sync_note(note, note_data, otag, high_tags):
     note.flush()
 
 
-def create_note(note_data, tag, decknm): #note_data: {"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name}
+# note_data: {"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name}
+def create_note(note_data, tag, decknm):
     model_name = note_data["model"]
     model = mw.col.models.byName(model_name)
     #sys.stderr.write("\nmodel:" + model_name)
-    
+
     if not model:
         raise "Model Not Found"
     mw.col.models.setCurrent(model)
@@ -90,7 +93,7 @@ def create_note(note_data, tag, decknm): #note_data: {"row":int, "id":int, "fiel
     for fldnm in note_data["fields"]:
         fldval = note_data["fields"][fldnm]
         #sys.stderr.write("\nfield:" + str(fldnm) + "content:" +str(fldval))
-        if not fldval: #convert NoneType to string
+        if not fldval:  # convert NoneType to string
             fldval = ""
         note[fldnm] = fldval
     note.tags = [tag]
@@ -98,8 +101,7 @@ def create_note(note_data, tag, decknm): #note_data: {"row":int, "id":int, "fiel
     note.model()['did'] = did
     mw.col.addNote(note)
     return note.id
-    #https://github.com/inevity/addon-movies2anki/blob/master/anki2.1mvaddon/movies2anki/movies2anki.py#L786
-
+    # https://github.com/inevity/addon-movies2anki/blob/master/anki2.1mvaddon/movies2anki/movies2anki.py#L786
 
 
 def remove_notes(high_tags, note_ids):
@@ -152,7 +154,7 @@ def sync():
         efr = ExcelFileReadOnly(file["src"])
         efr.load_file()
         notes_data = efr.read_file()
-        sys.stderr.write("\nnumber of notes:" +str(len(notes_data)))
+        sys.stderr.write("\nnumber of notes:" + str(len(notes_data)))
         for note_data in notes_data:
             if note_data["id"]:
                 note_id = note_data["id"]
