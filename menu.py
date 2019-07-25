@@ -52,7 +52,6 @@ Excel files will be created from existing Anki Cards with selected tags.
 
 
 def modify_menu():
-    config = mw.addonManager.getConfig(ADDON_NAME)
     label = "Anki -> Excel"
     action = create_action(label, confirm_a2e_sync)
     mw.form.menuTools.addAction(action)

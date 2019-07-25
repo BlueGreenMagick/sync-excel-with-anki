@@ -42,7 +42,7 @@ class ExcelFileReadOnly:
         self.models = models
         self.models_ids = models_ids
         rows_data = []
-        sys.stderr.write("\nmodelcount:" + str(len(models)))
+        #sys.stderr.write("\nmodelcount:" + str(len(models)))
         for row in ws.iter_rows(min_row=2+len(models)):
             # needs to check if it is not integer and raise error in that case.
             model_id = row[0].value

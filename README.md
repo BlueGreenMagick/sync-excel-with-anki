@@ -1,8 +1,9 @@
 # Anki Excel Sync
 
-## Requirements:
-Spreadsheet software that can edit .xlsx files (Microsoft Excel files)
+## Note:
+Supports only .xlsx files and its derivatives (Microsoft Excel files)
 Notes **cannot** have more than two tags with selected super-tag. (Super-tag is the top-most level of hierarchical tags. Super-tag of tag `science::physics::var` would be `science`)
+If there are formulas, the formula itself will be seen as values, not computed values.
 
 ## How To Use:
 This add-on batch syncs all excel files in a directory, and its corresponding cards in anki.

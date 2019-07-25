@@ -39,7 +39,7 @@ def excel_files_in_dir(directory):
 
 
 def get_excel_file_names(dirc):
-    files, high_tags = excel_files_in_dir(dirc)  # later use a for loop
+    files, high_tags = excel_files_in_dir(dirc)
     return (files, high_tags)
 
 
@@ -144,36 +144,35 @@ def e2a_sync():
     note_ids = []
     dirc = config["directory"]
     files, high_tags = get_excel_file_names(dirc)
-    sys.stderr.write("\nnumber of files:" + str(len(files)))
+    sys.stderr.write("\nnumber of files: " + str(len(files)))
     decknm = config["new-deck"]
     for file in files:
-        sys.stderr.write("\n path:" + file["src"])
+        sys.stderr.write("\n path: " + file["src"])
         tag = file["tag"]
         ef = ExcelFile(file["src"])
         ef.load_file()
-        efr = ExcelFileReadOnly(file["src"])
-        efr.load_file()
-        notes_data = efr.read_file()
-        sys.stderr.write("\nnumber of notes:" + str(len(notes_data)))
+        notes_data = ef.read_file()
+        sys.stderr.write("\nnumber of notes: " + str(len(notes_data)))
         for note_data in notes_data:
             if note_data["id"]:
                 note_id = note_data["id"]
                 try:
                     note = mw.col.getNote(note_id)
                 except:
-                    sys.stderr.write("\ninvalid id, create card(row):" + str(note_data["row"]))
+                    sys.stderr.write(
+                        "\ninvalid id, create card(row): " + str(note_data["row"]))
                     note_id = create_note(note_data, tag, decknm)
                     ef.set_id(note_data["row"], note_data["fields"], note_id)
                     note = mw.col.getNote(note_id)
                 sync_note(note, note_data, tag, high_tags)
             else:
-                sys.stderr.write("\ncreate card(row):" + str(note_data["row"]))
+                sys.stderr.write("\ncreate card(row): " + str(note_data["row"]))
                 note_id = create_note(note_data, tag, decknm)
                 ef.set_id(note_data["row"], note_data["fields"], note_id)
             note_ids.append(note_id)
         ef.save()
         ef.close()
-    sys.stderr.write("\ntotal number of notes" + str(len(note_ids)))
+    sys.stderr.write("\ntotal number of notes: " + str(len(note_ids)))
     remove_notes(high_tags, note_ids)
     sys.stderr.write("\ndone")
     mw.reset()
@@ -183,7 +182,9 @@ def a2e_sync():
     config = mw.addonManager.getConfig(ADDON_NAME)
     root_dir = config["directory"]
     col_width = config["col-width"]
-    high_tags = get_high_dirs()
+    dirc = config["directory"]
+    files, high_tags = get_excel_file_names(dirc)
+    high_tags = get_high_dirs() #because high_tag from above do not detect folders without files in it.
     notes = {}
     models = model_data()
     sys.stderr.write("\nmodels done")
@@ -194,21 +195,44 @@ def a2e_sync():
             note = card.note()
             if len(note.tags) == 1:
                 note_tag = note.tags[0]
-                if note_tag in notes:
-                    notes[note_tag].append(note)
-                else:
-                    notes[note_tag] = [note]
+            else:
+                tc = 0
+                for t in note.tags:
+                    if t.startswith(tag + "::"):
+                        note_tag = t
+                        tc += 1
+                if tc > 1:
+                    tstr = ','.join(note.tags)
+                    raise Exception("""More than one selected super-tag: %s 
+Aborted sync. No excel files modified."""%tstr)
+
+            if not note_tag:
+                continue
+
+            note_tag = str(note_tag)
+            if note_tag in notes:
+                notes[note_tag].append(note)
+            else:
+                notes[note_tag] = [note]
     sys.stderr.write("\ntag get card done")
+    exist_file = []
     for tag in notes:
-        sys.stderr.write("\na tag done")
+        sys.stderr.write("\ndone tag" + tag)
         dir_tree = tag.split("::")
         dir_tree = list(filter(None, dir_tree))
         dir = os.path.join(root_dir, *dir_tree)
         dir += ".xlsx"
+        exist_file.append(dir)
         ef = ExcelFile(dir)
         ef.create_file()
         ef.write(notes[tag], models, col_width)
         ef.save()
         ef.close()
+    sys.stderr.write("\nupdating excel done")
+    for f in files:
+        f = f["src"]
+        if f not in exist_file:
+            os.remove(f)
+            sys.stderr.write("\ndeleted file: " + f)
     sys.stderr.write("\ndone")
     mw.reset()
