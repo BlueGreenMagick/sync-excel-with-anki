@@ -186,6 +186,7 @@ def a2e_sync():
     files, high_tags = get_excel_file_names(dirc)
     high_tags = get_high_dirs() #because high_tag from above do not detect folders without files in it.
     notes = {}
+    nids = []
     models = model_data()
     sys.stderr.write("\nmodels done")
     for tag in high_tags:
@@ -205,13 +206,14 @@ def a2e_sync():
                     tstr = ','.join(note.tags)
                     raise Exception("""More than one selected super-tag: %s 
 Aborted sync. No excel files modified."""%tstr)
-
             if not note_tag:
                 continue
 
             note_tag = str(note_tag)
             if note_tag in notes:
-                notes[note_tag].append(note)
+                if note.id not in nids:
+                    notes[note_tag].append(note)
+                    nids.append(note.id)
             else:
                 notes[note_tag] = [note]
     sys.stderr.write("\ntag get card done")
