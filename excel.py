@@ -3,6 +3,8 @@ import sys
 
 from openpyxl import load_workbook, Workbook
 
+from aqt.utils import showInfo
+
 
 class ExcelFileReadOnly:
 

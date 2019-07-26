@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QAction
 from aqt import mw
 from aqt.utils import askUserDialog
 
-from sync import e2a_sync, a2e_sync
+from sync import ExcelSync
 
 ADDON_NAME = "sync-excel-with-anki"
 
@@ -28,7 +28,7 @@ Anki cards will be overwritten.
     ret = diag.run()
     if ret == confirm_label:
         mw.checkpoint("Excel -> Anki, but modification to excel files cannot be reverted")
-        e2a_sync()
+        ExcelSync().e2a_sync()
     elif ret == cancel_label:
         return
 
@@ -44,7 +44,7 @@ Excel files will be created from existing Anki Cards with selected tags.
     ret = diag.run()
     if ret == confirm_label:
         mw.checkpoint("Anki -> Excel, but modification to excel files cannot be reverted")
-        a2e_sync()
+        ExcelSync().a2e_sync()
         cnfg = mw.addonManager.getConfig(ADDON_NAME)
         cnfg["need_init_sync"] = False
         mw.addonManager.writeConfig(ADDON_NAME, cnfg)
