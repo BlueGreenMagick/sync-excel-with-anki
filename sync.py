@@ -140,13 +140,16 @@ def model_data():
 
 
 def e2a_sync():
+    mw.progress.start(immediate=True, label="Searching for files")
     config = mw.addonManager.getConfig(ADDON_NAME)
     note_ids = []
     dirc = config["directory"]
     files, high_tags = get_excel_file_names(dirc)
     sys.stderr.write("\nnumber of files: " + str(len(files)))
     decknm = config["new-deck"]
+    finf = 0
     for file in files:
+        mw.progress.update(label="%d / %d files imported"%(finf, len(files)))
         sys.stderr.write("\n path: " + file["src"])
         tag = file["tag"]
         ef = ExcelFile(file["src"])
@@ -172,13 +175,16 @@ def e2a_sync():
             note_ids.append(note_id)
         ef.save()
         ef.close()
+        finf+=1
     sys.stderr.write("\ntotal number of notes: " + str(len(note_ids)))
     remove_notes(high_tags, note_ids)
     sys.stderr.write("\ndone")
+    mw.progress.finish()
     mw.reset()
 
 
 def a2e_sync():
+    mw.progress.start(immediate=True, label="Looking at directories")
     config = mw.addonManager.getConfig(ADDON_NAME)
     root_dir = config["directory"]
     col_width = config["col-width"]
@@ -189,6 +195,7 @@ def a2e_sync():
     nids = []
     models = model_data()
     sys.stderr.write("\nmodels done")
+    mw.progress.update(label="Going through all the cards")
     for tag in high_tags:
         card_ids = mw.col.findCards("tag:" + tag + "::*")
         for card_id in card_ids:
@@ -218,7 +225,9 @@ Aborted sync. No excel files modified."""%tstr)
                 notes[note_tag] = [note]
     sys.stderr.write("\ntag get card done")
     exist_file = []
+    finf = 0
     for tag in notes:
+        mw.progress.update(label="Writing Spreadsheets %d / %d"%(finf, len(notes)))
         sys.stderr.write("\ndone tag" + tag)
         dir_tree = tag.split("::")
         dir_tree = list(filter(None, dir_tree))
@@ -230,11 +239,14 @@ Aborted sync. No excel files modified."""%tstr)
         ef.write(notes[tag], models, col_width)
         ef.save()
         ef.close()
+        finf += 1
     sys.stderr.write("\nupdating excel done")
+    mw.progress.update(label="Deleting redundant files")
     for f in files:
         f = f["src"]
         if f not in exist_file:
             os.remove(f)
             sys.stderr.write("\ndeleted file: " + f)
     sys.stderr.write("\ndone")
+    mw.progress.finish()
     mw.reset()
