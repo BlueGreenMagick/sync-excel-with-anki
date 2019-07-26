@@ -1,12 +1,13 @@
 import os
 import sys
-from operator import itemgetter
 import unicodedata
 import urllib.parse
+from operator import itemgetter
+from datetime import datetime
 
 from aqt import mw
 from aqt.editor import Editor
-from aqt.utils import showInfo
+from aqt.utils import showText
 
 from excel import ExcelFile, ExcelFileReadOnly
 
@@ -17,7 +18,18 @@ class ExcelSync:
 
     def __init__(self):
         self.log = ""
+        self.simplelog = ""
         self.config = mw.addonManager.getConfig(ADDON_NAME)
+        self.create_ncount = 0
+
+    def simplelog_output(self):
+        showText(self.simplelog,title="Excel Sync Log")
+
+    def log_output(self):
+        self.log += "\n\n\n"
+        dirc = os.path.join(os.path.dirname(os.path.realpath(__file__)),"user_files", "sync.log")
+        with open(dirc, 'a+', encoding='utf-8') as file:
+            file.write(self.log)
 
     def excel_files_in_dir(self, directory):
         high_tags = []
@@ -68,7 +80,6 @@ class ExcelSync:
 
 
     def sync_note(self, note, note_data, otag, high_tags):
-        #sys.stderr.write("\ntag:" + otag)
         fields = note_data["fields"]
         for field in fields:
             val = fields[field]
@@ -89,7 +100,6 @@ class ExcelSync:
     def create_note(self, note_data, tag, decknm):
         model_name = note_data["model"]
         model = mw.col.models.byName(model_name)
-        #sys.stderr.write("\nmodel:" + model_name)
 
         if not model:
             raise "Model Not Found"
@@ -97,7 +107,6 @@ class ExcelSync:
         note = mw.col.newNote(forDeck=False)
         for fldnm in note_data["fields"]:
             fldval = note_data["fields"][fldnm]
-            #sys.stderr.write("\nfield:" + str(fldnm) + "content:" +str(fldval))
             if not fldval:  # convert NoneType to string
                 fldval = ""
             note[fldnm] = fldval
@@ -105,20 +114,21 @@ class ExcelSync:
         did = mw.col.decks.id(decknm)
         note.model()['did'] = did
         mw.col.addNote(note)
+        self.log += "\nCreated note with id %d"%note.id
+        self.create_ncount += 1
         return note.id
         # https://github.com/inevity/addon-movies2anki/blob/master/anki2.1mvaddon/movies2anki/movies2anki.py#L786
 
 
     def remove_notes(self, high_tags, note_ids):
         del_ids = []
-        sys.stderr.write("\ntags:")
         for tag in high_tags:
-            sys.stderr.write(tag + ',')
             card_ids = mw.col.findCards("tag:" + tag + "::*")
             for card_id in card_ids:
                 if mw.col.getCard(card_id).nid not in note_ids:
                     del_ids.append(card_id)
-        sys.stderr.write("\ndeleted cards:" + str(len(del_ids)))
+        self.log += "\ndeleted cards: %d"%len(del_ids)
+        self.simplelog += "\ndeleted %d card(s)"%len(del_ids)
         mw.col.remCards(del_ids)
 
 
@@ -145,111 +155,143 @@ class ExcelSync:
 
 
     def e2a_sync(self):
-        mw.progress.start(immediate=True, label="Searching for files")
-        note_ids = []
-        dirc = self.config["directory"]
-        decknm = self.config["new-deck"]
-        files, high_tags = self.get_excel_file_names(dirc)
-        sys.stderr.write("\nnumber of files: " + str(len(files)))
-        finf = 0
-        for file in files:
-            mw.progress.update(label="%d / %d files imported"%(finf, len(files)))
-            sys.stderr.write("\n path: " + file["src"])
-            tag = file["tag"]
-            ef = ExcelFile(file["src"])
-            ef.load_file()
-            notes_data = ef.read_file()
-            sys.stderr.write("\nnumber of notes: " + str(len(notes_data)))
-            for note_data in notes_data:
-                if note_data["id"]:
-                    note_id = note_data["id"]
-                    try:
-                        note = mw.col.getNote(note_id)
-                    except:
-                        sys.stderr.write(
-                            "\ninvalid id, create card(row): " + str(note_data["row"]))
+        try:
+            mw.progress.start(immediate=True, label="Searching for files")
+            self.log += "e2a sync started at %s"%datetime.now().isoformat()
+            note_ids = []
+            dirc = self.config["directory"]
+            self.log += "\n%s"%dirc
+            self.simplelog += "\ndirectory: %s"%dirc
+            decknm = self.config["new-deck"]
+            files, high_tags = self.get_excel_file_names(dirc)
+
+            self.log += "\nnumber of files: %d"%len(files)
+            self.log += "\nhigh tags: %s"%(','.join(high_tags))
+            finf = 0
+            for file in files:
+                mw.progress.update(label="%d / %d files imported"%(finf, len(files)))
+                tag = file["tag"]
+                ef = ExcelFile(file["src"])
+                ef.load_file()
+                notes_data = ef.read_file()
+                self.log += "\n path: %s number of notes: %d"%(file["src"], len(notes_data))
+                relpath = file["src"].replace(dirc,"")
+                self.simplelog += "\n%s : %d note(s)"%(relpath,len(notes_data))
+                for note_data in notes_data:
+                    if note_data["id"]:
+                        note_id = note_data["id"]
+                        try:
+                            note = mw.col.getNote(note_id)
+                        except:
+                            self.log += "\ninvalid id, create card(row): %d"%note_data["row"]
+                            note_id = self.create_note(note_data, tag, decknm)
+                            ef.set_id(note_data["row"], note_data["fields"], note_id)
+                            note = mw.col.getNote(note_id)
+                        self.sync_note(note, note_data, tag, high_tags)
+                    else:
+                        self.log += "\ncreate card(row): %d"%note_data["row"]
                         note_id = self.create_note(note_data, tag, decknm)
                         ef.set_id(note_data["row"], note_data["fields"], note_id)
-                        note = mw.col.getNote(note_id)
-                    self.sync_note(note, note_data, tag, high_tags)
-                else:
-                    sys.stderr.write("\ncreate card(row): " + str(note_data["row"]))
-                    note_id = self.create_note(note_data, tag, decknm)
-                    ef.set_id(note_data["row"], note_data["fields"], note_id)
-                note_ids.append(note_id)
-            ef.save()
-            ef.close()
-            finf+=1
-        sys.stderr.write("\ntotal number of notes: " + str(len(note_ids)))
-        self.remove_notes(high_tags, note_ids)
-        sys.stderr.write("\ndone")
-        mw.progress.finish()
-        mw.reset()
+                    note_ids.append(note_id)
+                ef.save()
+                ef.close()
+                finf+=1
+            self.simplelog += "\ncreated %d notes(s)"%self.create_ncount
+            self.log += "\ntotal number of notes: %d"%len(note_ids)
+            self.simplelog += "\ntotal %d note(s)"%len(note_ids)
+            self.remove_notes(high_tags, note_ids)
+            self.log += "\ne2a sync finished at: %s"%datetime.now().isoformat()
+            mw.progress.finish()
+            mw.reset()
+            self.simplelog_output()
+            self.log_output()
+        except Exception as e:
+            self.log += "\n" + str(e)
+            self.log_output()
+            raise
 
 
     def a2e_sync(self):
-        mw.progress.start(immediate=True, label="Looking at directories")
-        root_dir = self.config["directory"]
-        col_width = self.config["col-width"]
-        dirc = self.config["directory"]
-        files, high_tags = self.get_excel_file_names(dirc)
-        high_tags = self.get_high_dirs() #because high_tag from above do not detect folders without files in it.
-        notes = {}
-        nids = []
-        models = self.model_data()
-        sys.stderr.write("\nmodels done")
-        mw.progress.update(label="Going through all the cards")
-        for tag in high_tags:
-            card_ids = mw.col.findCards("tag:" + tag + "::*")
-            for card_id in card_ids:
-                card = mw.col.getCard(card_id)
-                note = card.note()
-                if len(note.tags) == 1:
-                    note_tag = note.tags[0]
-                else:
-                    tc = 0
-                    for t in note.tags:
-                        if t.startswith(tag + "::"):
-                            note_tag = t
-                            tc += 1
-                    if tc > 1:
-                        tstr = ','.join(note.tags)
-                        raise Exception("""More than one selected super-tag: %s 
-    Aborted sync. No excel files modified."""%tstr)
-                if not note_tag:
-                    continue
+        try:
+            mw.progress.start(immediate=True, label="Looking at directories")
+            self.log += "a2e sync started at: %s"%datetime.now().isoformat()
+            root_dir = self.config["directory"]
+            col_width = self.config["col-width"]
+            dirc = self.config["directory"]
+            self.log += "\n%s"%dirc
+            self.simplelog += "directory: %s"%dirc
+            files, high_tags = self.get_excel_file_names(dirc)
+            high_tags = self.get_high_dirs() #because high_tag from above do not detect folders without files in it.
+            totn = 0
+            notes = {}
+            nids = []
+            models = self.model_data()
+            self.log += "\nmodels done"
+            mw.progress.update(label="Going through all the cards")
+            for tag in high_tags:
+                card_ids = mw.col.findCards("tag:" + tag + "::*")
+                self.log += "card count: %d"%len(card_ids)
+                for card_id in card_ids:
+                    card = mw.col.getCard(card_id)
+                    note = card.note()
+                    if len(note.tags) == 1:
+                        note_tag = note.tags[0]
+                    else:
+                        tc = 0
+                        for t in note.tags:
+                            if t.startswith(tag + "::"):
+                                note_tag = t
+                                tc += 1
+                        if tc > 1:
+                            tstr = ','.join(note.tags)
+                            raise Exception("""More than one selected super-tag: %s 
+        Aborted sync. No excel files modified."""%tstr)
+                    if not note_tag:
+                        continue
 
-                note_tag = str(note_tag)
-                if note_tag in notes:
-                    if note.id not in nids:
-                        notes[note_tag].append(note)
-                        nids.append(note.id)
-                else:
-                    notes[note_tag] = [note]
-        sys.stderr.write("\ntag get card done")
-        exist_file = []
-        finf = 0
-        for tag in notes:
-            mw.progress.update(label="Writing Spreadsheets %d / %d"%(finf, len(notes)))
-            sys.stderr.write("\ndone tag" + tag)
-            dir_tree = tag.split("::")
-            dir_tree = list(filter(None, dir_tree))
-            dir = os.path.join(root_dir, *dir_tree)
-            dir += ".xlsx"
-            exist_file.append(dir)
-            ef = ExcelFile(dir)
-            ef.create_file()
-            ef.write(notes[tag], models, col_width)
-            ef.save()
-            ef.close()
-            finf += 1
-        sys.stderr.write("\nupdating excel done")
-        mw.progress.update(label="Deleting redundant files")
-        for f in files:
-            f = f["src"]
-            if f not in exist_file:
-                os.remove(f)
-                sys.stderr.write("\ndeleted file: " + f)
-        sys.stderr.write("\ndone")
-        mw.progress.finish()
-        mw.reset()
+                    note_tag = str(note_tag)
+                    if note_tag in notes:
+                        if note.id not in nids:
+                            notes[note_tag].append(note)
+                            nids.append(note.id)
+                    else:
+                        notes[note_tag] = [note]
+            self.log += "\ntag get card done, total tag count: %d"%len(notes)
+            self.simplelog += "\ntotal %d tag(s)"%len(notes)
+            exist_file = []
+            finf = 0
+            for tag in notes:
+                mw.progress.update(label="Writing Spreadsheets %d / %d"%(finf, len(notes)))
+                dir_tree = tag.split("::")
+                dir_tree = list(filter(None, dir_tree))
+                dir = os.path.join(root_dir, *dir_tree)
+                dir += ".xlsx"
+                exist_file.append(dir)
+                ef = ExcelFile(dir)
+                ef.create_file()
+                ef.write(notes[tag], models, col_width)
+                ef.save()
+                ef.close()
+                totn += len(notes[tag])
+                self.log += "\ndone dir:%s note-count: %d"%(dir, len(notes[tag]))
+                self.simplelog += "\n%s: %d note(s)"%(dir, len(notes[tag]))
+                finf += 1
+            self.log += "\nupdating excel done"
+            self.log += "\ntotal notes: %d"%totn
+            self.simplelog += "\ntotal %d note(s)"%totn
+            mw.progress.update(label="Deleting redundant files")
+            for f in files:
+                f = f["src"]
+                if f not in exist_file:
+                    os.remove(f)
+                    self.log += "\ndeleted file: %s"%f
+                    self.simplelog += "\ndeleted file: %s"%f
+            self.log += "\na2e sync finished at: %s"%datetime.now().isoformat()
+            mw.progress.finish()
+            mw.reset()
+            self.simplelog_output()
+            self.log_output()
+        except Exception as e:
+            self.log += "\n" + str(e)
+            self.log_output()
+            raise
