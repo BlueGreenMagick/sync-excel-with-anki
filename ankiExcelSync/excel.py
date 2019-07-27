@@ -43,18 +43,19 @@ class ExcelFileReadOnly:
                         cell = str(cell.value).strip()
                         model_fields.append(cell)
                 models_fields.append(model_fields)
-                models_desg.append(str(row[0].value))
+                models_desg.append(str(row[0].value).strip())
         self.models_fields = models_fields
         self.models = models
         self.models_desg = models_desg
         rows_data = []
+
         # Go through each note rows
         for row in ws.iter_rows(min_row=2+len(models)):
             model_desg = row[0].value
             if not model_desg:
                 log += ""
                 continue
-            model_desg = str(model_desg)
+            model_desg = str(model_desg).strip()
             try:
                 model_index = models_desg.index(model_desg)
             except:

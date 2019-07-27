@@ -10,9 +10,7 @@ from aqt import mw
 from aqt.editor import Editor
 from aqt.utils import showText
 
-from excel import ExcelFile, ExcelFileReadOnly
-
-ADDON_NAME = "sync-excel-with-anki"
+from .excel import ExcelFile, ExcelFileReadOnly
 
 
 class ExcelSync:
@@ -20,7 +18,7 @@ class ExcelSync:
     def __init__(self):
         self.log = ""
         self.simplelog = ""
-        self.config = mw.addonManager.getConfig(ADDON_NAME)
+        self.config = mw.addonManager.getConfig(__name__)
         self.create_ncount = 0
 
     def simplelog_output(self):
@@ -28,7 +26,7 @@ class ExcelSync:
 
     def log_output(self):
         self.log += "\n\n\n"
-        dirc = os.path.join(os.path.dirname(os.path.realpath(__file__)),"user_files", "sync.log")
+        dirc = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),"user_files", "sync.log")
         with open(dirc, 'a+', encoding='utf-8') as file:
             file.write(self.log)
 
@@ -207,8 +205,8 @@ Aborted while in sync. Please sync again after fixing the issue.
                 mw.progress.update(label="%d / %d files imported"%(finf, len(files)))
                 tag = file["tag"]
                 ef = ExcelFile(file["src"])
+                ef.load_file()
                 try:
-                    ef.load_file()
                     notes_data = ef.read_file()
 
                     relpath = file["src"].replace(dirc,"")
@@ -235,7 +233,8 @@ Aborted while in sync. Please sync again after fixing the issue.
                     ef.save()
                     ef.close()
                 except Exception as e:
-                    ef.save()
+                    self.log += "\nError in file open: %s"%str(e)
+                    ef.close()
                     raise Exception("Error occured while during sync. The problemitic excel file was not saved. \n%s"%str(e))
                 finf+=1
             self.simplelog += "\ncreated %d notess"%self.create_ncount
@@ -340,6 +339,7 @@ tag: %s"""%(''.join(note_tag))
                     ef.save()
                     ef.close()
                 except Exception as e:
+                    self.log += "\nError in file open: %s"%str(e)
                     ef.close()
                     raise Exception("Error occured while creating excel file. \n%s"%str(e))
 
