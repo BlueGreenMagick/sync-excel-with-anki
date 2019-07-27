@@ -23,14 +23,18 @@ class ExcelFileReadOnly:
         wsv = self.wsv
         models = []
         models_fields = []
-        models_ids = []
+        models_desg = []
+        log = ""
+
+        # Get name of models in first row
         for row in ws.iter_rows(min_row=1, max_row=1):
-            models_data = row
-        for model in models_data:
-            if model.value:
-                model = str(model.value).strip()
-                if model:
-                    models.append(model)
+            for cell in row:
+                if cell.value:
+                    model = str(cell.value).strip()
+                    if model:
+                        models.append(model)
+
+        # Get name of fields per model
         for n in range(len(models)):
             for row in ws.iter_rows(min_row=n+2, max_row=n+2):
                 model_fields = []
@@ -39,35 +43,48 @@ class ExcelFileReadOnly:
                         cell = str(cell.value).strip()
                         model_fields.append(cell)
                 models_fields.append(model_fields)
-                models_ids.append(str(row[0].value))
+                models_desg.append(str(row[0].value))
         self.models_fields = models_fields
         self.models = models
-        self.models_ids = models_ids
+        self.models_desg = models_desg
         rows_data = []
-        #sys.stderr.write("\nmodelcount:" + str(len(models)))
+        # Go through each note rows
         for row in ws.iter_rows(min_row=2+len(models)):
-            # needs to check if it is not integer and raise error in that case.
-            model_id = row[0].value
-            if not model_id:
+            model_desg = row[0].value
+            if not model_desg:
+                log += ""
                 continue
-            model_id = str(model_id)
-            model_index = models_ids.index(model_id)
+            model_desg = str(model_desg)
+            try:
+                model_index = models_desg.index(model_desg)
+            except:
+                self.close()
+                raise Exception("""Fatal: Invalid note type designator in 
+file: %s
+row: %d
+designator: %s
+The sync was stopped mid-way. Please run it again after editing the problem file.
+""" % (self.path, row[0].row, model_desg))
             model_name = models[model_index]
             model_fields = models_fields[model_index]
-            cid = row[len(model_fields)+1].value
-            if cid:
-                cid = int(cid)
+            nid = row[len(model_fields)+1].value
+            if nid:
+                try:
+                    nid = int(nid)
+                except ValueError:
+                    log += "\n<b>Non-fatal</b>: non integer value '%s' in nid field, in %d row" %(str(nid), row[0].row)
+                    nid = None
             else:
-                cid = None
-            row_data = {"row": row[0].row, "id": cid, "fields": {
-            }, "model": model_name}  # row is 1 based
+                nid = None
+            row_data = {"row": row[0].row, "id": nid, "model": model_name, "fields": {}, "log": log, "path":self.path} # row is 1 based
+            # Get field values
             for i in range(0, len(model_fields)):
                 if row[i + 1].value:
                     row_data["fields"][model_fields[i]] = str(row[i + 1].value)
                 else:
                     row_data["fields"][model_fields[i]] = None
             rows_data.append(row_data)
-        # [{"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name}]
+        # [{"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name, "log": str_log}]
         return rows_data
 
     def close(self):
@@ -101,12 +118,14 @@ class ExcelFile(ExcelFileReadOnly):
             hd = [model["id"]]
             hd += model["flds"]
             headers.append(hd)
+            
         # write headers
         for n in range(len(first_line)):
             ws.cell(row=1, column=n + 1).value = first_line[n]
         for n in range(len(headers)):
             for m in range(len(headers[n])):
                 ws.cell(row=n + 2, column=m + 1).value = headers[n][m]
+
         # write notes
         crow = len(headers) + 1  # 1 row before first row of note rows
         for note in notes:
