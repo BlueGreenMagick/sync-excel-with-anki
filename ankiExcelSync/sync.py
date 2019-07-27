@@ -11,7 +11,7 @@ from aqt.editor import Editor
 from aqt.utils import showText
 
 from .excel import ExcelFile, ExcelFileReadOnly
-
+from .menu import confirm_win
 
 class ExcelSync:
 
@@ -19,7 +19,6 @@ class ExcelSync:
         self.log = ""
         self.simplelog = ""
         self.config = mw.addonManager.getConfig(__name__)
-        self.create_ncount = 0
 
     def simplelog_output(self):
         showText(self.simplelog,title="Excel Sync Done",minWidth=450,minHeight=300)
@@ -140,21 +139,18 @@ Aborted while in sync. Please sync again after fixing the issue.
         mw.col.addNote(note)
         self.simplelog += "\ncreated note"
         self.log += "\ncreated note with id %d"%note.id
-        self.create_ncount += 1
         return note.id
         # https://github.com/inevity/addon-movies2anki/blob/master/anki2.1mvaddon/movies2anki/movies2anki.py#L786
 
 
-    def remove_notes(self, super_tags, note_ids):
+    def get_remove_cards_id(self,super_tags,note_ids):
         del_ids = []
         for tag in super_tags:
             card_ids = mw.col.findCards("tag:" + tag + "::*")
             for card_id in card_ids:
                 if mw.col.getCard(card_id).nid not in note_ids:
                     del_ids.append(card_id)
-        self.log += "\ndeleted cards: %d"%len(del_ids)
-        self.simplelog += "\ndeleted %d card(s)"%len(del_ids)
-        mw.col.remCards(del_ids)
+        return del_ids
 
 
     def model_data(self):
@@ -198,49 +194,112 @@ Aborted while in sync. Please sync again after fixing the issue.
             files, super_tags = self.excel_files_in_dir(dirc)
             self.log += "\nnumber of files: %d"%len(files)
             self.log += "\nsuper tags: %s"%(','.join(super_tags))
-            note_ids = []
-            finf = 0
+            exist_note_ids = []
+            exist_notes_data = []
+            add_notes_data = []
+            add_note_cnt = 0
+            cnt = 0
 
+            #Open files and collect all notes
             for file in files:
-                mw.progress.update(label="%d / %d files imported"%(finf, len(files)))
+                mw.progress.update(label="%d / %d files opened"%(cnt, len(files)))
+                cnt+=1
+                add_notes_data.append([])
                 tag = file["tag"]
                 ef = ExcelFile(file["src"])
                 ef.load_file()
                 try:
-                    notes_data = ef.read_file()
+                    dt = ef.read_file()
+                    ef.close()
+                except Exception as e:
+                    self.log += "ERROR: cannot read file.\n%s"%str(e)
+                    ef.close()
+                    raise Exception(str(e))
 
-                    relpath = file["src"].replace(dirc,"")
-                    self.log += "\n path: %s number of notes: %d"%(file["src"], len(notes_data))
+                relpath = file["src"].replace(dirc,"")
+                self.log += "\n path: %s number of notes: %d"%(relpath, len(dt))
 
-                    for note_data in notes_data:
-                        self.log += note_data["log"]
-                        if note_data["id"]:
-                            note_id = note_data["id"]
-                            try:
-                                note = mw.col.getNote(note_id)
-                            except TypeError: # Note doesn't exist
-                                self.log += "\ninvalid id, create card(row): %d"%note_data["row"]
-                                note_id = self.create_note(note_data, tag, decknm)
-                                ef.set_id(note_data["row"], note_data["fields"], note_id)
-                                note = mw.col.getNote(note_id)
-                            # not in try block because exception may come from this function instead
-                            self.sync_note(note, note_data, tag, super_tags) 
-                        else:
-                            self.log += "\ncreate card(row): %d"%note_data["row"]
-                            note_id = self.create_note(note_data, tag, decknm)
-                            ef.set_id(note_data["row"], note_data["fields"], note_id)
-                        note_ids.append(note_id)
+                for note_data in dt:
+                    self.log += note_data["log"]
+                    note_data["tag"] = tag
+                    if note_data["id"]:
+                        note_id = note_data["id"]
+                        try:
+                            note = mw.col.getNote(note_id)
+                            note_data["exist"] = True
+                            exist_note_ids.append(note_id)
+                            exist_notes_data.append(note_data)
+
+                        except TypeError:
+                            self.log += "\ninvalid note id"
+                            note_data["exist"] = False
+                            add_note_cnt += 1
+                            path = note_data["path"]
+                            add_notes_data[-1].append(note_data)
+                    else:
+                        note_data["exist"] = False
+                        add_note_cnt += 1
+                        path = note_data["path"]
+                        add_notes_data[-1].append(note_data)
+                
+                
+            #Get Confirmation
+            mw.progress.update(label="Finding cards to delete")
+            del_ids = self.get_remove_cards_id(super_tags, exist_note_ids)
+            cnfrmtxt = """%d notes exist,
+%d notes will be added,
+%d cards will be deleted.
+Proceed?
+"""%(len(exist_notes_data),add_note_cnt,len(del_ids))
+            cf = confirm_win(cnfrmtxt,default=0)
+            if not cf:
+                self.simplelog += "\nCancelled e2a sync midway"
+                self.log += "\nCancelled e2a sync midway"
+                return
+            
+            #Update existing notes
+            cnt = 0
+            for note_data in exist_notes_data:
+                if cnt % 100 == 0:
+                    mw.progress.update(label="Updating existing notes %d / %d"%(cnt,len(exist_notes_data)))
+                note_id = note_data["id"]
+                tag = note_data["tag"]
+                note = mw.col.getNote(note_id)
+                self.sync_note(note, note_data, tag, super_tags)
+                cnt += 1
+            
+            #Add new notes
+            cnt = 0
+            for note_datas in add_notes_data:
+                if len(note_datas) == 0:
+                    continue
+                ef = ExcelFile(note_datas[0]["path"])
+                ef.load_file()
+                try:
+                    for note_data in note_datas:
+                        if cnt%100 == 0:
+                            mw.progress.update(label="%d / %d cards updated"%(cnt, add_note_cnt))
+                        tag = note_data["tag"]
+                        note_id = self.create_note(note_data, tag, decknm)
+                        ef.set_id(note_data["row"], note_data["fields"], note_id)
+                        cnt += 1
                     ef.save()
                     ef.close()
                 except Exception as e:
-                    self.log += "\nError in file open: %s"%str(e)
+                    self.log += "\nError in updating note id.\n%s"%str(e)
                     ef.close()
-                    raise Exception("Error occured while during sync. The problemitic excel file was not saved. \n%s"%str(e))
-                finf+=1
-            self.simplelog += "\ncreated %d notess"%self.create_ncount
-            self.log += "\ntotal number of notes: %d"%len(note_ids)
-            self.simplelog += "\ntotal %d notes"%len(note_ids)
-            self.remove_notes(super_tags, note_ids)
+                    raise Exception("Error occured while reading file. File was not saved. Please sync again after fixing the issue.\n%s"%str(e))
+
+            #Delete cards
+            mw.col.remCards(del_ids)
+            self.log += "\ndeleted cards count:%d"%len(del_ids)
+            self.simplelog += "\ndeleted %d card(s)"%len(del_ids)
+
+            #log
+            self.log += "\nexisting notes count:%d"%len(exist_note_ids)
+            self.simplelog += "\n%d note exist"%len(exist_note_ids)
+            self.simplelog += "\ncreated %d notes"%add_note_cnt
+            self.log += "\ncreated notes count:%d"%add_note_cnt
             self.log += "\ne2a sync finished at: %s"%datetime.now().isoformat()
             mw.progress.finish()
             mw.reset()
