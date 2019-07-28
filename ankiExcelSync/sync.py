@@ -188,7 +188,7 @@ Aborted while in sync. Please sync again after fixing the issue.
             decknm = self.config["new-deck"]
             self.log += "\nto deck: %s"%decknm
             if not mw.col.decks.byName(decknm):
-                raise Exception("FATAL: No deck exists with name %s"%decknm)
+                raise Exception("ERROR: No deck exists with name %s"%decknm)
 
             #Get all excel file names and supertags
             files, super_tags = self.excel_files_in_dir(dirc)
@@ -241,7 +241,6 @@ Aborted while in sync. Please sync again after fixing the issue.
                         add_note_cnt += 1
                         path = note_data["path"]
                         add_notes_data[-1].append(note_data)
-                
                 
             #Get Confirmation
             mw.progress.update(label="Finding cards to delete")
@@ -417,7 +416,7 @@ tag: %s"""%(''.join(note_tag))
                 if f not in exist_file:
                     os.remove(f)
                     self.log += "\ndeleted file: %s"%f
-                    relpath = dir.replace(f,"")
+                    relpath = f.replace(dirc,"")
                     self.simplelog += "\ndeleted file: %s"%relpath
 
             #Finish            

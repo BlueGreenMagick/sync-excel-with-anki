@@ -60,7 +60,7 @@ class ExcelFileReadOnly:
                 model_index = models_desg.index(model_desg)
             except:
                 self.close()
-                raise Exception("""Fatal: Invalid note type designator in 
+                raise Exception("""ERROR: Invalid note type designator in 
 file: %s
 row: %d
 designator: %s
