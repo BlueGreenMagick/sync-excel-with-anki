@@ -44,7 +44,6 @@ Excel files will be created from existing Anki Cards with selected tags.
         mw.checkpoint("Anki -> Excel, but modification to excel files cannot be reverted")
         ExcelSync().a2e_sync()
         cnfg = mw.addonManager.getConfig(__name__)
-        cnfg["need_init_sync"] = False
         mw.addonManager.writeConfig(__name__, cnfg)
 
 

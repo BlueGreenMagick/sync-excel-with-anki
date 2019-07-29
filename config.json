@@ -1,5 +1,5 @@
 {
-    "directory": "Z:/Somedirectory you want to save excel files",
+    "_directory": "Z:/Somedirectory you want to save excel files",
     "need_init_sync": true,
     "new-deck": "Default",
     "col-width": [6,60,60,20],

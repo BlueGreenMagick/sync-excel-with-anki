@@ -66,7 +66,7 @@ current_tag:%s
 
     def get_super_dirs(self):
         config = self.config
-        dir = config["directory"]
+        dir = config["_directory"]
         super_dirs = []
         for name in os.listdir(dir):
             if os.path.isdir(os.path.join(dir, name)):
@@ -182,7 +182,7 @@ Aborted while in sync. Please sync again after fixing the issue.
             self.log += "e2a sync started at %s"%datetime.now().isoformat()
 
             # Get value from config
-            dirc = self.config["directory"]
+            dirc = self.config["_directory"]
             self.log += "\n%s"%dirc
             self.simplelog += "\ndirectory: %s"%dirc
             decknm = self.config["new-deck"]
@@ -317,9 +317,9 @@ Proceed?
             self.log += "a2e sync started at: %s"%datetime.now().isoformat()
             # Get value from config
 
-            root_dir = self.config["directory"]
+            root_dir = self.config["_directory"]
             col_width = self.config["col-width"]
-            dirc = self.config["directory"]
+            dirc = self.config["_directory"]
             self.log += "\n%s"%dirc
             self.simplelog += "\ndirectory: %s"%dirc
 
