@@ -82,6 +82,31 @@ current_tag:%s
         txt = mw.col.media.escapeImages(txt, unescape=True)
         return txt
 
+    #Check if note and note_data is the same (fields and tag)
+    def same_note(self, note, note_data, otag, super_tags):
+        fields = note_data["fields"]
+        nflds = note.keys()
+        for fieldnm in fields:
+            if fieldnm not in nflds:
+                raise Exception("""
+ERROR: Field name does not exist: %s
+in file: %s
+in row: %d
+Aborted while in sync. Some notes were synced while others weren't.
+Please sync again after fixing the issue.
+"""%(fieldnm, note_data["path"], note_data["row"]))
+        for fieldnm in fields:
+            val = fields[fieldnm]
+            if val:
+                val = self.prepare_field_val(val)
+                if note[fieldnm] != val:
+                    return False
+        for tag in note.tags:
+            for super_tag in super_tags:
+                if tag.lower().startswith(super_tag.lower() + "::"):
+                    if tag != otag:
+                        return False
+        return True
 
     def sync_note(self, note, note_data, otag, super_tags):
         fields = note_data["fields"]
@@ -99,7 +124,8 @@ Please sync again after fixing the issue.
             val = fields[fieldnm]
             if val:
                 val = self.prepare_field_val(val)
-                note[fieldnm] = val
+                if note[fieldnm] != val:
+                    note[fieldnm] = val
             else:
                 note[fieldnm] = ""
         for tag in note.tags:
@@ -151,7 +177,6 @@ Aborted while in sync. Please sync again after fixing the issue.
                 if mw.col.getCard(card_id).nid not in note_ids:
                     del_ids.append(card_id)
         return del_ids
-
 
     def model_data(self):
         models_all = mw.col.models.all()
@@ -207,7 +232,7 @@ Aborted while in sync. Please sync again after fixing the issue.
             self.log += "\nnumber of files: %d"%len(files)
             self.log += "\nsuper tags: %s"%(','.join(super_tags))
             exist_note_ids = []
-            exist_notes_data = []
+            modify_notes_data = []
             add_notes_data = []
             add_note_cnt = 0
             cnt = 0
@@ -240,13 +265,14 @@ Aborted while in sync. Please sync again after fixing the issue.
                             note = mw.col.getNote(note_id)
                             note_data["exist"] = True
                             exist_note_ids.append(note_id)
-                            exist_notes_data.append(note_data)
+                            tag = note_data["tag"]
+                            if not self.same_note(note, note_data, tag, super_tags):
+                                modify_notes_data.append(note_data)
 
                         except TypeError:
                             self.log += "\ninvalid note id"
                             note_data["exist"] = False
                             add_note_cnt += 1
-                            path = note_data["path"]
                             add_notes_data[-1].append(note_data)
                     else:
                         note_data["exist"] = False
@@ -257,11 +283,13 @@ Aborted while in sync. Please sync again after fixing the issue.
             #Get Confirmation
             mw.progress.update(label="Finding cards to delete")
             del_ids = self.get_remove_cards_id(super_tags, exist_note_ids)
-            cnfrmtxt = """%d notes exist,
-%d notes will be added,
-%d cards will be deleted.
+            cnfrmtxt = """%d notes total,
+%d notes to modify,
+%d notes to add,
+%d cards to delete.
 Proceed?
-"""%(len(exist_notes_data),add_note_cnt,len(del_ids))
+"""%(len(exist_note_ids), len(modify_notes_data),add_note_cnt,len(del_ids))
+            self.log += ("\n" + cnfrmtxt)
             cf = confirm_win(cnfrmtxt,default=0)
             if not cf:
                 self.simplelog += "\nCancelled e2a sync midway"
@@ -271,9 +299,9 @@ Proceed?
             
             #Update existing notes
             cnt = 0
-            for note_data in exist_notes_data:
+            for note_data in modify_notes_data:
                 if cnt % 100 == 0:
-                    mw.progress.update(label="Updating existing notes %d / %d"%(cnt,len(exist_notes_data)))
+                    mw.progress.update(label="Updating existing notes %d / %d"%(cnt,len(modify_notes_data)))
                 note_id = note_data["id"]
                 tag = note_data["tag"]
                 note = mw.col.getNote(note_id)
@@ -304,15 +332,19 @@ Proceed?
 
             #Delete cards
             mw.col.remCards(del_ids)
-            self.log += "\ndeleted cards count:%d"%len(del_ids)
-            self.simplelog += "\ndeleted %d card(s)"%len(del_ids)
 
             #log
-            self.log += "\nexisting notes count:%d"%len(exist_note_ids)
-            self.simplelog += "\n%d note exist"%len(exist_note_ids)
-            self.simplelog += "\ncreated %d notes"%add_note_cnt
-            self.log += "\ncreated notes count:%d"%add_note_cnt
+            logtxt = """
+%d note exist
+%d notes modified
+%d notes created
+%d cards deleted
+"""%(len(exist_note_ids), len(modify_notes_data), add_note_cnt, len(del_ids))
+            self.simplelog += logtxt
+            self.log += logtxt
             self.log += "\ne2a sync finished at: %s"%datetime.now().isoformat()
+
+            #Finish sync    
             mw.progress.finish()
             mw.reset()
             self.simplelog_output()
