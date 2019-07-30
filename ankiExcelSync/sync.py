@@ -266,6 +266,7 @@ Proceed?
             if not cf:
                 self.simplelog += "\nCancelled e2a sync midway"
                 self.log += "\nCancelled e2a sync midway"
+                mw.progress.finish()
                 return
             
             #Update existing notes
