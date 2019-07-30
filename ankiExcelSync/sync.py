@@ -174,8 +174,20 @@ Aborted while in sync. Please sync again after fixing the issue.
             model["id"] = id
         return models
 
+    def backup_then_sync(self, syncfunc):
+        mw.setEnabled(True)
+        def on_unload():
+            mw.loadCollection()
+            syncfunc()
+        mw.unloadCollection(on_unload)
 
     def e2a_sync(self):
+        self.backup_then_sync(self._e2a_sync)
+    
+    def a2e_sync(self):
+        self.backup_then_sync(self._a2e_sync)
+
+    def _e2a_sync(self):
         try:
             mw.progress.start(immediate=True, label="Searching for files")
             self.simplelog += "Excel -> Anki"
@@ -310,7 +322,7 @@ Proceed?
             raise
 
 
-    def a2e_sync(self):
+    def _a2e_sync(self):
         try:
             mw.progress.start(immediate=True, label="Looking at directories")
             self.simplelog += "Anki -> Excel"
@@ -430,3 +442,4 @@ tag: %s"""%(''.join(note_tag))
             self.log += "\n" + str(e)
             self.log_output()
             raise
+
