@@ -279,7 +279,15 @@ Aborted while in sync. Please sync again after fixing the issue.
                         add_note_cnt += 1
                         path = note_data["path"]
                         add_notes_data[-1].append(note_data)
-                
+            
+            #No need to sync if there are no notes to sync
+            if !len(modify_notes_data) and !add_note_cnt and !len(del_ids):
+                mw.progress.finish()
+                self.log += "No note to sync, finish at %s"datetime.now().isoformat()
+                self.log_output()
+                return
+
+
             #Get Confirmation
             mw.progress.update(label="Finding cards to delete")
             del_ids = self.get_remove_cards_id(super_tags, exist_note_ids)
@@ -408,9 +416,11 @@ Aborted sync. No excel files modified."""%tstr)
                         for t in note_tag:
                             if r.match(t):
                                 err_spetags.append(note_tag)
-                                self.simplelog += """\nWARNING: You should avoid use of special characters in tag, 
+                                txt =  """\nWARNING: You should avoid use of special characters in tag, 
 as your OS may not support such characters in file path.
 tag: %s"""%(''.join(note_tag))
+                                self.simplelog += txt
+                                self.log += txt
                                 break
 
                     # tags such as tg::: should become just tg
