@@ -279,18 +279,18 @@ Aborted while in sync. Please sync again after fixing the issue.
                         add_note_cnt += 1
                         path = note_data["path"]
                         add_notes_data[-1].append(note_data)
+
+            mw.progress.update(label="Finding cards to delete")
+            del_ids = self.get_remove_cards_id(super_tags, exist_note_ids)
             
             #No need to sync if there are no notes to sync
-            if !len(modify_notes_data) and !add_note_cnt and !len(del_ids):
+            if len(modify_notes_data) == 0 and add_note_cnt == 0 and len(del_ids) == 0:
                 mw.progress.finish()
-                self.log += "No note to sync, finish at %s"datetime.now().isoformat()
+                self.log += "No note to sync, finish at %s"%datetime.now().isoformat()
                 self.log_output()
                 return
 
-
             #Get Confirmation
-            mw.progress.update(label="Finding cards to delete")
-            del_ids = self.get_remove_cards_id(super_tags, exist_note_ids)
             cnfrmtxt = """%d notes total,
 %d notes to modify,
 %d notes to add,
