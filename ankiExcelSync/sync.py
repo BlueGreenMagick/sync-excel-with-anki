@@ -30,8 +30,11 @@ class ExcelSync:
     def log_output(self):
         if self.config["log"]:
             self.log += "\n\n\n"
-            dirc = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),"user_files", "sync.log")
-            with open(dirc, 'a+', encoding='utf-8') as file:
+            dirc = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),"user_files")
+            path = os.path.join(dirc, "sync.log")
+            if not os.path.exists(dirc):
+                os.makedirs(dirc)
+            with open(path, 'a+', encoding='utf-8') as file:
                 file.write(self.log)
 
     def excel_files_in_dir(self, directory):
