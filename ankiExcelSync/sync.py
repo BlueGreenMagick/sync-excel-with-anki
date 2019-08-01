@@ -162,8 +162,33 @@ Aborted while in sync. Please sync again after fixing the issue.
         note.tags = [tag]
         did = mw.col.decks.byName(decknm)["id"] #decknm is already validated in a2e_sync
         note.model()['did'] = did
-        mw.col.addNote(note)
-        self.simplelog += "\ncreated note"
+
+        #Check if note is valid, from method aqt.addCards.addNote
+        ret = note.dupeOrEmpty()
+        if ret == 1:
+            msg = """Non-fatal: Note skipped because first field empty. Please sync again after fixing this issue.
+            From row: %d, file: %s
+            """%(note_data["row"], note_data["path"])
+            self.log += msg
+            self.simplelog += msg
+        
+        if '{{cloze:' in note.model()['tmpls'][0]['qfmt']:
+            if not mw.col.models._availClozeOrds(
+                    note.model(), note.joinedFields(), False):
+                msg = """Non-fatal: No cloze exist in cloze note type. Note was still added.
+                From row: %d, file: %s
+                """%(note_data["row"], note_data["path"])
+                self.log += msg
+                self.simplelog += msg
+
+        cards = mw.col.addNote(note)
+        if not cards:
+            msg = """NON-fatal: No cards are made from this note. Please sync again after fixing this issue.
+            From row: %d, file: %s
+            """%(note_data["row"], note_data["path"])
+            self.log += msg
+            self.simplelog += msg        
+
         self.log += "\ncreated note with id %d"%note.id
         return note.id
         # https://github.com/inevity/addon-movies2anki/blob/master/anki2.1mvaddon/movies2anki/movies2anki.py#L786
@@ -206,12 +231,12 @@ Aborted while in sync. Please sync again after fixing the issue.
         mw.unloadCollection(on_unload)
 
     def e2a_sync(self):
-        self._e2a_sync()
-        #self.backup_then_sync(self._e2a_sync)
+        #self._e2a_sync()
+        self.backup_then_sync(self._e2a_sync)
     
     def a2e_sync(self):
-        self._a2e_sync()
-        #self.backup_then_sync(self._a2e_sync)
+        #self._a2e_sync()
+        self.backup_then_sync(self._a2e_sync)
 
     def _e2a_sync(self):
         try:
