@@ -28,10 +28,11 @@ class ExcelSync:
             tooltip("Sync succesful")
 
     def log_output(self):
-        self.log += "\n\n\n"
-        dirc = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),"user_files", "sync.log")
-        with open(dirc, 'a+', encoding='utf-8') as file:
-            file.write(self.log)
+        if self.config["log"]:
+            self.log += "\n\n\n"
+            dirc = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),"user_files", "sync.log")
+            with open(dirc, 'a+', encoding='utf-8') as file:
+                file.write(self.log)
 
     def excel_files_in_dir(self, directory):
         super_tags = []
@@ -322,7 +323,7 @@ Aborted while in sync. Please sync again after fixing the issue.
             #No need to sync if there are no notes to sync
             if len(modify_notes_data) == 0 and add_note_cnt == 0 and len(del_ids) == 0:
                 mw.progress.finish()
-                self.simplelog += "No note to sync"
+                self.simplelog += "\nNo note to sync"
                 self.simplelog_output()
                 self.log += "\nNo note to sync, finish at %s"%datetime.now().isoformat()
                 self.log_output()
