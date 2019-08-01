@@ -64,12 +64,10 @@ current_tag:%s
         return (file_list, super_tags)
 
 
-    def get_super_dirs(self):
-        config = self.config
-        dir = config["_directory"]
+    def get_super_dirs(self,dirc):
         super_dirs = []
-        for name in os.listdir(dir):
-            if os.path.isdir(os.path.join(dir, name)):
+        for name in os.listdir(dirc):
+            if os.path.isdir(os.path.join(dirc, name)):
                 super_dirs.append(name)
         return super_dirs
 
@@ -248,6 +246,11 @@ Aborted while in sync. Please sync again after fixing the issue.
             self.simplelog += "\ndirectory: %s"%dirc
             decknm = self.config["new-deck"]
             self.log += "\nto deck: %s"%decknm
+            
+            #Check if valid
+            if dirc == "Z:/Somedirectory you want to save excel files":
+                msg = "ERROR: You need to set the directory for your excel files, in addon config.\nSync aborted"
+                raise Exception(msg)
             if not mw.col.decks.byName(decknm):
                 raise Exception("ERROR: No deck exists with name %s"%decknm)
 
@@ -396,7 +399,6 @@ Proceed?
             self.log += "a2e sync started at: %s"%datetime.now().isoformat()
             # Get value from config
 
-            root_dir = self.config["_directory"]
             col_width = self.config["col-width"]
             dirc = self.config["_directory"]
             self.log += "\n%s"%dirc
@@ -404,7 +406,7 @@ Proceed?
 
             # Get directories
             files, super_tags = self.excel_files_in_dir(dirc)
-            super_tags = self.get_super_dirs() #because super_tag from above do not detect folders without files in it.
+            super_tags = self.get_super_dirs(dirc) #because super_tag from above do not detect folders without files in it.
             totn = 0
             notes = {}
             nids = []
@@ -466,7 +468,7 @@ tag: %s"""%(''.join(note_tag))
             for tag in notes:
                 mw.progress.update(label="Writing Spreadsheets %d / %d"%(finf, len(notes)))
                 dir_tree = tag.split("::")
-                dir = os.path.join(root_dir, *dir_tree)
+                dir = os.path.join(dirc, *dir_tree)
                 dir += ".xlsx"
                 exist_file.append(dir)
 
