@@ -200,17 +200,18 @@ Aborted while in sync. Please sync again after fixing the issue.
         return models
 
     def backup_then_sync(self, syncfunc):
-        mw.setEnabled(True)
         def on_unload():
             mw.loadCollection()
             syncfunc()
         mw.unloadCollection(on_unload)
 
     def e2a_sync(self):
-        self.backup_then_sync(self._e2a_sync)
+        self._e2a_sync()
+        #self.backup_then_sync(self._e2a_sync)
     
     def a2e_sync(self):
-        self.backup_then_sync(self._a2e_sync)
+        self._a2e_sync()
+        #self.backup_then_sync(self._a2e_sync)
 
     def _e2a_sync(self):
         try:
@@ -261,7 +262,7 @@ Aborted while in sync. Please sync again after fixing the issue.
                     note_data["tag"] = tag
                     if note_data["id"]:
                         note_id = note_data["id"]
-                        try:
+                        if mw.col.findNotes("nid:%s" % note_id):
                             note = mw.col.getNote(note_id)
                             note_data["exist"] = True
                             exist_note_ids.append(note_id)
@@ -269,11 +270,13 @@ Aborted while in sync. Please sync again after fixing the issue.
                             if not self.same_note(note, note_data, tag, super_tags):
                                 modify_notes_data.append(note_data)
 
-                        except TypeError:
+                        #if note with given id doesn't exist
+                        else:
                             self.log += "\ninvalid note id"
                             note_data["exist"] = False
                             add_note_cnt += 1
                             add_notes_data[-1].append(note_data)
+                    #new note
                     else:
                         note_data["exist"] = False
                         add_note_cnt += 1
@@ -286,7 +289,7 @@ Aborted while in sync. Please sync again after fixing the issue.
             #No need to sync if there are no notes to sync
             if len(modify_notes_data) == 0 and add_note_cnt == 0 and len(del_ids) == 0:
                 mw.progress.finish()
-                self.log += "No note to sync, finish at %s"%datetime.now().isoformat()
+                self.log += "\nNo note to sync, finish at %s"%datetime.now().isoformat()
                 self.log_output()
                 return
 
@@ -360,7 +363,7 @@ Proceed?
         except Exception as e:
             self.log += "ERROR! log:\n" + str(e)
             self.log_output()
-            raise
+            raise e
 
 
     def _a2e_sync(self):
@@ -484,5 +487,5 @@ tag: %s"""%(''.join(note_tag))
         except Exception as e:
             self.log += "\n" + str(e)
             self.log_output()
-            raise
+            raise e
 
