@@ -5,3 +5,4 @@
 - `autosync_on_launch` [bool]: If `true`, on profile launch, 'Excel -> Anki' will happen automatically.
 - `col-width` [list - integer]: Width of columns of excel files. First element becomes the width of first column, Second the width of second column, etc. If your excel file has more columns, they are set to default width. Set it to `[]` if you want to use the default width for all columns.
 - `new-deck` [string]: Name of the deck that new notes in your excel files will go into.
+- `detailed-log` [bool]: If `true`, after sync, a detailed log appears.

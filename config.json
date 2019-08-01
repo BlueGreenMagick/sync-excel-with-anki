@@ -3,5 +3,6 @@
     "new-deck": "Default",
     "col-width": [6,60,60,20],
     "autosync_on_launch": true,
-    "autosync_on_close": true
+    "autosync_on_close": true,
+    "detailed-log": true
 }

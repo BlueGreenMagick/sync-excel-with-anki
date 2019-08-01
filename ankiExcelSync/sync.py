@@ -8,7 +8,7 @@ from datetime import datetime
 
 from aqt import mw
 from aqt.editor import Editor
-from aqt.utils import showText
+from aqt.utils import showText, tooltip
 
 from .excel import ExcelFile, ExcelFileReadOnly
 from .menu import confirm_win
@@ -19,9 +19,13 @@ class ExcelSync:
         self.log = ""
         self.simplelog = ""
         self.config = mw.addonManager.getConfig(__name__)
+        self.log_has_error = False
 
     def simplelog_output(self):
-        showText(self.simplelog,title="Excel Sync Done",minWidth=450,minHeight=300)
+        if self.config["detailed-log"] or self.log_has_error:
+            showText(self.simplelog,title="Excel Sync Done",minWidth=450,minHeight=300)
+        else:
+            tooltip("Sync succesful")
 
     def log_output(self):
         self.log += "\n\n\n"
@@ -167,6 +171,7 @@ Aborted while in sync. Please sync again after fixing the issue.
             msg = """Non-fatal: Note skipped because first field empty. Please sync again after fixing this issue.
             From row: %d, file: %s
             """%(note_data["row"], note_data["path"])
+            self.log_has_error = True
             self.log += msg
             self.simplelog += msg
         
@@ -176,6 +181,7 @@ Aborted while in sync. Please sync again after fixing the issue.
                 msg = """Non-fatal: No cloze exist in cloze note type. Note was still added.
                 From row: %d, file: %s
                 """%(note_data["row"], note_data["path"])
+                self.log_has_error = True
                 self.log += msg
                 self.simplelog += msg
 
@@ -185,7 +191,8 @@ Aborted while in sync. Please sync again after fixing the issue.
             From row: %d, file: %s
             """%(note_data["row"], note_data["path"])
             self.log += msg
-            self.simplelog += msg        
+            self.simplelog += msg
+            self.log_has_error = True        
 
         self.log += "\ncreated note with id %d"%note.id
         return note.id
@@ -315,6 +322,8 @@ Aborted while in sync. Please sync again after fixing the issue.
             #No need to sync if there are no notes to sync
             if len(modify_notes_data) == 0 and add_note_cnt == 0 and len(del_ids) == 0:
                 mw.progress.finish()
+                self.simplelog += "No note to sync"
+                self.simplelog_output()
                 self.log += "\nNo note to sync, finish at %s"%datetime.now().isoformat()
                 self.log_output()
                 return
@@ -331,6 +340,8 @@ Proceed?
             if not cf:
                 self.simplelog += "\nCancelled e2a sync midway"
                 self.log += "\nCancelled e2a sync midway"
+                self.log_output()
+                self.simplelog_output()
                 mw.progress.finish()
                 return
             
@@ -387,6 +398,7 @@ Proceed?
             self.simplelog_output()
             self.log_output()
         except Exception as e:
+            self.log_has_error = True
             self.log += "ERROR! log:\n" + str(e)
             self.log_output()
             raise e
@@ -510,6 +522,7 @@ tag: %s"""%(''.join(note_tag))
             self.log_output()
 
         except Exception as e:
+            self.log_has_error = True
             self.log += "\n" + str(e)
             self.log_output()
             raise e
