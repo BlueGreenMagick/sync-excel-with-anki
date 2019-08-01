@@ -231,11 +231,9 @@ Aborted while in sync. Please sync again after fixing the issue.
         mw.unloadCollection(on_unload)
 
     def e2a_sync(self):
-        #self._e2a_sync()
         self.backup_then_sync(self._e2a_sync)
     
     def a2e_sync(self):
-        #self._a2e_sync()
         self.backup_then_sync(self._a2e_sync)
 
     def _e2a_sync(self):
