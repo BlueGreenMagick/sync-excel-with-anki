@@ -29,7 +29,6 @@ Anki cards will be overwritten.
 """
     conf = confirm_win(txt,"Create","Cancel")
     if conf:
-        mw.checkpoint("Excel -> Anki, but modification to excel files cannot be reverted")
         ExcelSync().e2a_sync()
 
 
@@ -41,7 +40,6 @@ Excel files will be created from existing Anki Cards with selected tags.
     conf = confirm_win(txt,"Create","Cancel")
     
     if conf:
-        mw.checkpoint("Anki -> Excel, but modification to excel files cannot be reverted")
         ExcelSync().a2e_sync()
         cnfg = mw.addonManager.getConfig(__name__)
         mw.addonManager.writeConfig(__name__, cnfg)
