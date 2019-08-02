@@ -138,7 +138,8 @@ Please sync again after fixing the issue.
             for super_tag in super_tags:
                 if tag.lower().startswith(super_tag.lower() + "::"):
                     note.tags.remove(tag)
-        note.tags.append(otag)
+        tag = unicodedata.normalize("NFC", tag)
+        note.tags += mw.col.tags.canonify([tag])
         note.flush()
 
 
@@ -165,7 +166,8 @@ Aborted while in sync. Please sync again after fixing the issue.
             if not fldval:  # convert NoneType to string
                 fldval = ""
             note[fldnm] = fldval
-        note.tags = [tag]
+        tag = unicodedata.normalize("NFC", tag)
+        note.tags = mw.col.tags.canonify([tag])
         did = mw.col.decks.byName(decknm)["id"] #decknm is already validated in a2e_sync
         note.model()['did'] = did
 
@@ -456,10 +458,8 @@ Proceed?
                 mw.progress.finish()
                 return
 
-
-            mw.progress.update(label="Going through all the cards")
-            
             # Iterate through each tag and sort notes per tag
+            mw.progress.update(label="Going through all the cards")
             for tag in super_tags:
                 card_ids = mw.col.findCards("tag:" + tag + "::*")
                 self.log += "card count: %d"%len(card_ids)
