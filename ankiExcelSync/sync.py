@@ -245,37 +245,15 @@ Aborted while in sync. Please sync again after fixing the issue.
     def a2e_sync(self):
         self.backup_then_sync(self._a2e_sync)
 
-    def _e2a_sync(self):
-        try:
-            mw.progress.start(immediate=True, label="Searching for files")
-            self.simplelog += "Excel -> Anki"
-            self.log += "e2a sync started at %s"%datetime.now().isoformat()
 
-            # Get value from config
-            dirc = self.config["_directory"]
-            self.log += "\n%s"%dirc
-            self.simplelog += "\ndirectory: %s"%dirc
-            decknm = self.config["new-deck"]
-            self.log += "\nto deck: %s"%decknm
-            
-            #Check if valid
-            if dirc == "Z:/Somedirectory you want to save excel files":
-                msg = "ERROR: You need to set the directory for your excel files, in addon config.\nSync aborted"
-                raise Exception(msg)
-            if not mw.col.decks.byName(decknm):
-                raise Exception("ERROR: No deck exists with name %s"%decknm)
-
-            #Get all excel file names and supertags
-            files, super_tags = self.excel_files_in_dir(dirc)
-            self.log += "\nnumber of files: %d"%len(files)
-            self.log += "\nsuper tags: %s"%(','.join(super_tags))
+    def compare_notes(self, files, super_tags ):
+        #Open files and collect all notes
+            dirc = self.dirc
             exist_note_ids = []
             modify_notes_data = []
             add_notes_data = []
             add_note_cnt = 0
             cnt = 0
-
-            #Open files and collect all notes
             for file in files:
                 mw.progress.update(label="%d / %d files opened"%(cnt, len(files)))
                 cnt+=1
@@ -322,7 +300,36 @@ Aborted while in sync. Please sync again after fixing the issue.
 
             mw.progress.update(label="Finding cards to delete")
             del_ids = self.get_remove_cards_id(super_tags, exist_note_ids)
+            return (exist_note_ids, modify_notes_data, add_note_cnt, add_notes_data, del_ids)
+
+    def _e2a_sync(self):
+        try:
+            mw.progress.start(immediate=True, label="Searching for files")
+            self.simplelog += "Excel -> Anki"
+            self.log += "e2a sync started at %s"%datetime.now().isoformat()
+
+            # Get value from config
+            dirc = self.config["_directory"]
+            self.dirc = dirc
+            self.log += "\n%s"%dirc
+            self.simplelog += "\ndirectory: %s"%dirc
+            decknm = self.config["new-deck"]
+            self.log += "\nto deck: %s"%decknm
             
+            #Check if valid
+            if dirc == "Z:/Somedirectory you want to save excel files":
+                msg = "ERROR: You need to set the directory for your excel files, in addon config.\nSync aborted"
+                raise Exception(msg)
+            if not mw.col.decks.byName(decknm):
+                raise Exception("ERROR: No deck exists with name %s"%decknm)
+
+            #Get all excel file names and supertags
+            files, super_tags = self.excel_files_in_dir(dirc)
+            self.log += "\nnumber of files: %d"%len(files)
+            self.log += "\nsuper tags: %s"%(','.join(super_tags))
+
+            exist_note_ids, modify_notes_data, add_note_cnt, add_notes_data, del_ids = self.compare_notes(files, super_tags)
+
             #No need to sync if there are no notes to sync
             if len(modify_notes_data) == 0 and add_note_cnt == 0 and len(del_ids) == 0:
                 mw.progress.finish()
@@ -417,6 +424,7 @@ Proceed?
 
             col_width = self.config["col-width"]
             dirc = self.config["_directory"]
+            self.dirc = dirc
             self.log += "\n%s"%dirc
             self.simplelog += "\ndirectory: %s"%dirc
 
@@ -429,8 +437,28 @@ Proceed?
             err_spetags = []
             models = self.model_data()
             self.log += "\nmodels done"
-            mw.progress.update(label="Going through all the cards")
+            
+            #Show overview, get confirmation
+            exist_note_ids, modify_notes_data, add_note_cnt, add_notes_data, del_ids = self.compare_notes(files, super_tags)
+            cnfrmtxt = """%d notes total,
+%d rows to modify,
+%d rows to add,
+%d rows to delete.
+Proceed?
+"""%(len(exist_note_ids), len(modify_notes_data),len(del_ids),add_note_cnt)
+            self.log += ("\n" + cnfrmtxt)
+            cf = confirm_win(cnfrmtxt,default=0)
+            if not cf:
+                self.simplelog += "\nCancelled a2e sync midway"
+                self.log += "\nCancelled a2e sync midway"
+                self.log_output()
+                self.simplelog_output()
+                mw.progress.finish()
+                return
 
+
+            mw.progress.update(label="Going through all the cards")
+            
             # Iterate through each tag and sort notes per tag
             for tag in super_tags:
                 card_ids = mw.col.findCards("tag:" + tag + "::*")
