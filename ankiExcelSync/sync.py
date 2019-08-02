@@ -59,6 +59,8 @@ current_tag:%s
                     """%(dir,high,tag))
 
             if fol and fol not in super_tags:
+                fol = unicodedata.normalize("NFC", fol)
+                fol= mw.col.tags.canonify([fol])[0]
                 super_tags.append(fol)
 
             for f in files:
@@ -108,6 +110,8 @@ Please sync again after fixing the issue.
                 if note[fieldnm] != val:
                     return False
         for tag in note.tags:
+            tag = unicodedata.normalize("NFC", tag)
+            tag = mw.col.tags.canonify([tag])[0]
             for super_tag in super_tags:
                 if tag.lower().startswith(super_tag.lower() + "::"):
                     if tag != otag:
@@ -283,7 +287,6 @@ Aborted while in sync. Please sync again after fixing the issue.
                             note = mw.col.getNote(note_id)
                             note_data["exist"] = True
                             exist_note_ids.append(note_id)
-                            tag = note_data["tag"]
                             if not self.same_note(note, note_data, tag, super_tags):
                                 modify_notes_data.append(note_data)
 
