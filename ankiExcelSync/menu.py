@@ -6,7 +6,7 @@ from aqt.utils import askUserDialog
 
 def confirm_win(text="", conf = "Yes", canc = "Cancel", default=1):
     diag = askUserDialog(text, [conf, canc])
-    diag.setDefault(1)
+    diag.setDefault(default)
     ret = diag.run()
     if ret == conf:
         return True
