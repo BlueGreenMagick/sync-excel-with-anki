@@ -419,7 +419,6 @@ Proceed?
             self.log_output()
             raise e
 
-
     def _a2e_sync(self):
         try:
             mw.progress.start(immediate=True, label="Looking at directories")
@@ -432,7 +431,7 @@ Proceed?
             self.dirc = dirc
             self.log += "\n%s"%dirc
             self.simplelog += "\ndirectory: %s"%dirc
-
+            
             # Get directories
             files, super_tags = self.excel_files_in_dir(dirc)
             super_tags = self.get_super_dirs(dirc) #because super_tag from above do not detect folders without files in it.
@@ -442,7 +441,7 @@ Proceed?
             err_spetags = []
             models = self.model_data()
             self.log += "\nmodels done"
-
+            
             # Iterate through each tag and sort notes per tag
             mw.progress.update(label="Going through all the cards")
             for tag in super_tags:
@@ -456,9 +455,10 @@ Proceed?
                     else:
                         tc = 0
                         for t in note.tags:
-                            if t.startswith(tag + "::"):
-                                note_tag = t
-                                tc += 1
+                            for tt in super_tags:
+                                if t.startswith(tt + "::"):
+                                    note_tag = t
+                                    tc += 1
                         if tc > 1:
                             tstr = ','.join(note.tags)
                             raise Exception("""More than one selected super-tag: %s 
