@@ -20,10 +20,13 @@ class ExcelSync:
         self.simplelog = ""
         self.config = mw.addonManager.getConfig(__name__)
         self.log_has_error = False
+        self.tooltip_log = ""
 
     def simplelog_output(self):
         if self.config["detailed-log"] or self.log_has_error:
             showText(self.simplelog,title="Excel Sync Done",minWidth=450,minHeight=300)
+        else if self.tooltip_log:
+            tooltip(self.tooltip_log)
         else:
             tooltip("Sync succesful")
 
@@ -339,6 +342,7 @@ Aborted while in sync. Please sync again after fixing the issue.
             if len(modify_notes_data) == 0 and add_note_cnt == 0 and len(del_ids) == 0:
                 mw.progress.finish()
                 self.simplelog += "\nNo note to sync"
+                self.tooltip_log = "No note to sync"
                 self.simplelog_output()
                 self.log += "\nNo note to sync, finish at %s"%datetime.now().isoformat()
                 self.log_output()
@@ -517,7 +521,6 @@ tag: %s"""%(''.join(note_tag))
                 totn += len(notes[tag])
                 self.log += "\ndone dir:%s note-count: %d"%(dir, len(notes[tag]))
                 finf += 1
-            self.log += "\nupdating excel done"
             self.log += "\ntotal notes: %d"%totn
             self.simplelog += "\ntotal %d notes"%totn
             mw.progress.update(label="Deleting redundant files")
