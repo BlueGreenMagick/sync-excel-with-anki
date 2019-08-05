@@ -425,8 +425,8 @@ Proceed?
             mw.progress.start(immediate=True, label="Looking at directories")
             self.simplelog += "Anki -> Excel"
             self.log += "a2e sync started at: %s"%datetime.now().isoformat()
+            
             # Get value from config
-
             col_width = self.config["col-width"]
             dirc = self.config["_directory"]
             self.dirc = dirc
@@ -442,32 +442,6 @@ Proceed?
             err_spetags = []
             models = self.model_data()
             self.log += "\nmodels done"
-            
-            #Show overview, get confirmation
-            exist_note_ids, modify_notes_data, add_note_cnt, add_notes_data, del_ids = self.compare_notes(files, super_tags)
-            if len(modify_notes_data) == 0 and add_note_cnt == 0 and len(del_ids) == 0:
-                self.log += "\nNo note to sync, finish at %s"%datetime.now().isoformat()
-                self.log_output()
-                mw.progress.finish()
-                self.simplelog += "\nNo note to sync"
-                self.simplelog_output()
-                return
-
-            cnfrmtxt = """%d notes total,
-%d rows to modify,
-%d rows to add,
-%d rows to delete.
-Proceed?
-"""%(len(exist_note_ids), len(modify_notes_data),len(del_ids),add_note_cnt)
-            self.log += ("\n" + cnfrmtxt)
-            cf = confirm_win(cnfrmtxt,default=0)
-            if not cf:
-                self.simplelog += "\nCancelled a2e sync midway"
-                self.log += "\nCancelled a2e sync midway"
-                self.log_output()
-                self.simplelog_output()
-                mw.progress.finish()
-                return
 
             # Iterate through each tag and sort notes per tag
             mw.progress.update(label="Going through all the cards")
