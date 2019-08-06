@@ -10,12 +10,12 @@ This add-on batch syncs all excel files in a directory, and its corresponding ca
 
 After downloading the add-on, restart Anki. Then in addons menu, choose this add-on, click config and in there, set directory and deck. The excel files will be located in the directory, while the cards will go into the deck.
 
-The excel files are created per tag in tag hierarchy. For example, a card with tag `math::trigonometry` will be located inside `DIR/math/trigonometry.xlsx` and card with tag `math::calculus` will be located inside `DIR/math/calculus.xlsx` where `DIR` is the directory you set in the config file.
+The excel files are created per tag in tag hierarchy. For example, notes with tag `math::trigonometry` will be located inside `DIR/math/trigonometry.xlsx` where `DIR` is the directory you set in the config file. It works for non hierarchical tags as well. If you have a folder named `science`, notes with tag `science` will be located inside `DIR/science.xlsx`.
 
 In top menu, click tools, and you will see `Anki -> Excel` and `Excel -> Anki` buttons added.
-Clicking `Anki -> Excel` will automatically create excel files of notes in Anki, but before you do, you need to tell the addon, notes with which super-tag you want to keep in Excel files.
+Clicking `Anki -> Excel` will automatically create excel files of notes in Anki, but before you do, you need to tell the addon, notes with which super-tag you want to have as Excel files.
 
-If you want all the cards in `math::*` to be created in Anki, in the chosen directory, create a directory named `math`. That will let the add-on know which super-tag you want to sync notes.
+If you want all the cards in `math::*` or `math` to be created in Anki, in the chosen directory, create a directory named `math`. That will let the add-on know which super-tag you want to sync notes.
 
 After creating the directories, you can go back to Anki and click Anki -> Excel. After editing the excel files, you can click Excel -> Anki and notes will be created, deleted, or modified. Before adding or modifying excel files, always use Anki -> Excel to update all the excel files.
 

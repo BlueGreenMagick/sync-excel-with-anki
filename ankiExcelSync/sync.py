@@ -40,8 +40,18 @@ class ExcelSync:
             with open(path, 'a+', encoding='utf-8') as file:
                 file.write(self.log)
 
+    def get_super_dirs(self,dirc):
+        super_dirs = []
+        for name in os.listdir(dirc):
+            if os.path.isdir(os.path.join(dirc, name)):
+                name = unicodedata.normalize("NFC", name)
+                name = mw.col.tags.canonify([name])[0]
+                super_dirs.append(name)
+        return super_dirs
+
     def excel_files_in_dir(self, directory):
-        super_tags = []
+        super_tags = self.get_super_dirs(directory)
+
         file_list = []
         for root, dirs, files in os.walk(directory):
             high = root
@@ -61,11 +71,6 @@ current_high:%s
 current_tag:%s
                     """%(dir,high,tag))
 
-            if fol and fol not in super_tags:
-                fol = unicodedata.normalize("NFC", fol)
-                fol= mw.col.tags.canonify([fol])[0]
-                super_tags.append(fol)
-
             for f in files:
                 if (f[-5:] == ".xlsx" or ".xlsm") or f[-4:] == ".xls":
                     tf = f.split('.')
@@ -75,15 +80,6 @@ current_tag:%s
                     file_list.append(
                         {"src": os.path.join(root, f), "tag": tag_name})
         return (file_list, super_tags)
-
-
-    def get_super_dirs(self,dirc):
-        super_dirs = []
-        for name in os.listdir(dirc):
-            if os.path.isdir(os.path.join(dirc, name)):
-                super_dirs.append(name)
-        return super_dirs
-
 
     def prepare_field_val(self, val):
         txt = urllib.parse.unquote(val)
@@ -216,6 +212,7 @@ Aborted while in sync. Please sync again after fixing the issue.
         del_ids = []
         for tag in super_tags:
             card_ids = mw.col.findCards("tag:" + tag + "::*")
+            card_ids += mw.col.findCards("tag:" +tag)
             for card_id in card_ids:
                 if mw.col.getCard(card_id).nid not in note_ids:
                     del_ids.append(card_id)
@@ -438,7 +435,6 @@ Proceed?
             
             # Get directories
             files, super_tags = self.excel_files_in_dir(dirc)
-            super_tags = self.get_super_dirs(dirc) #because super_tag from above do not detect folders without files in it.
             totn = 0
             notes = {}
             nids = []
@@ -450,6 +446,7 @@ Proceed?
             mw.progress.update(label="Going through all the cards")
             for tag in super_tags:
                 card_ids = mw.col.findCards("tag:" + tag + "::*")
+                card_ids += mw.col.findCards("tag:" + tag)
                 self.log += "card count: %d"%len(card_ids)
                 for card_id in card_ids:
                     card = mw.col.getCard(card_id)
@@ -460,7 +457,7 @@ Proceed?
                         tc = 0
                         for t in note.tags:
                             for tt in super_tags:
-                                if t.startswith(tt + "::"):
+                                if t.startswith(tt + "::") or t == tt:
                                     note_tag = t
                                     tc += 1
                         if tc > 1:
