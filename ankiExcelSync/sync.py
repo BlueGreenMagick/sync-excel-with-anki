@@ -25,7 +25,7 @@ class ExcelSync:
     def simplelog_output(self):
         if self.config["detailed-log"] or self.log_has_error:
             showText(self.simplelog,title="Excel Sync Done",minWidth=450,minHeight=300)
-        else if self.tooltip_log:
+        elif self.tooltip_log:
             tooltip(self.tooltip_log)
         else:
             tooltip("Sync succesful")
