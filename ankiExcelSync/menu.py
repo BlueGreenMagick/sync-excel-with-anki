@@ -1,5 +1,3 @@
-import sys
-
 from PyQt5.QtWidgets import QAction
 from aqt import mw
 from aqt.utils import askUserDialog

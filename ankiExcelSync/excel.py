@@ -1,10 +1,6 @@
 import os
-import sys
 
 from openpyxl import load_workbook, Workbook
-
-from aqt.utils import showInfo
-
 
 class ExcelFileReadOnly:
 
@@ -73,11 +69,13 @@ The sync was stopped mid-way. Please run it again after editing the problem file
                 try:
                     nid = int(nid)
                 except ValueError:
-                    log += "\n<b>Non-fatal</b>: non integer value '%s' in nid field, in %d row" %(str(nid), row[0].row)
+                    log += "\n<b>Non-fatal</b>: non integer value '%s' in nid field, in %d row" % (
+                        str(nid), row[0].row)
                     nid = None
             else:
                 nid = None
-            row_data = {"row": row[0].row, "id": nid, "model": model_name, "fields": {}, "log": log, "path":self.path} # row is 1 based
+            row_data = {"row": row[0].row, "id": nid, "model": model_name, "fields": {
+            }, "log": log, "path": self.path}  # row is 1 based
             # Get field values
             for i in range(0, len(model_fields)):
                 if row[i + 1].value:
@@ -119,7 +117,7 @@ class ExcelFile(ExcelFileReadOnly):
             hd = [model["id"]]
             hd += model["flds"]
             headers.append(hd)
-            
+
         # write headers
         for n in range(len(first_line)):
             ws.cell(row=1, column=n + 1).value = first_line[n]

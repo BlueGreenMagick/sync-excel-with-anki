@@ -1,5 +1,4 @@
 import os
-import sys
 import unicodedata
 import urllib.parse
 import re

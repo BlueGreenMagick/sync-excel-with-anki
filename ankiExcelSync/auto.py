@@ -1,6 +1,4 @@
-import sys
-
-from anki.hooks import addHook, wrap
+from anki.hooks import addHook
 from aqt.main import AnkiQt
 from aqt import mw
 from .sync import ExcelSync
