@@ -55,17 +55,17 @@ The excel files are created per tag in tag hierarchy. After running a `Anki -> E
 After exporting anki notes to excel files, you can edit the excel files. You may create, modify, or delete rows. When editing is complete, click Excel -> Anki to import them in. The schedules will be preserved as long as the card id cell was not modified. 
 
 ### Excel File Format
-**1st row**: Names of note types.
+    **1st row**: Names of note types.
 
-**2nd row~**: note-type-rows. Each row represents one note type.<br>
-&nbsp; &nbsp; **1st column**: designator of note type. Can be any sequence of letters.<br>
-&nbsp; &nbsp; **2nd column~**: name of fields in note type. <br>
-&nbsp; &nbsp; &nbsp; &nbsp; *Must be the same as the name of fields of note type in Anki, or it will not work.<br>
+    **2nd row~**: note-type-rows. Each row represents one note type.<br>
+            **1st column**: designator of note type. Can be any sequence of letters.<br>
+            **2nd column~**: name of fields in note type. <br>
+                    *Must be the same as the name of fields of note type in Anki, or it will not work.<br>
 
-**n+2 row~**: note-rows. Each row represents one note.<br>
-&nbsp; &nbsp; **1st column**: designator of this note's note type specified in note-type-rows<br>
-&nbsp; &nbsp; **2nd column**: value for each fields. <br>
-&nbsp; &nbsp; &nbsp; &nbsp; *The order must be the same as the order specified in the note-type-row. <br>
-&nbsp; &nbsp; &nbsp; &nbsp; *You can leave it blank if you want.<br>
-&nbsp; &nbsp; **Last column**: note id in Anki. <br>
-&nbsp; &nbsp; &nbsp; &nbsp; *The addon will automatically fill this cell in, so there is no need to put anything here.<br>
+    **n+2 row~**: note-rows. Each row represents one note.<br>
+            **1st column**: designator of this note's note type specified in note-type-rows<br>
+            **2nd column**: value for each fields. <br>
+                    *The order must be the same as the order specified in the note-type-row. <br>
+                    *You can leave it blank if you want.<br>
+            **Last column**: note id in Anki. <br>
+                    *The addon will automatically fill this cell in, so there is no need to put anything here.<br>
