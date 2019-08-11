@@ -25,32 +25,32 @@ This add-on batch syncs all excel files in a directory, and its corresponding ca
 
 If  `_directory` is set to `D:\\Anki\\Excel`, and the directory structure looks like this:
 
-Anki
-├── Excel
-|   ├── french
-|   ├── chinese
+    Anki
+    ├── Excel
+    |   ├── french
+    |   ├── chinese
 
 And your tag structure looks like this:
 
-french : total 1330 notes
-├── french::word : 30 notes, total 1230 notes (including sub-tags)
-|   ├── french::word::noun : 1000 notes
-|   ├── french::word::verb : 200 notes
-├── french::grammar: 100 notes
-chinese : 400 notes
+    french : total 1330 notes
+    ├── french::word : 30 notes, total 1230 notes (including sub-tags)
+    |   ├── french::word::noun : 1000 notes
+    |   ├── french::word::verb : 200 notes
+    ├── french::grammar: 100 notes
+    chinese : 400 notes
 
 The excel files are created per tag in tag hierarchy. After running a `Anki -> Excel` sync, the directory structure will look like this:
 
-Anki
-├── Excel
-|   ├── french
-|   |   ├── word
-|   |   |   ├── noun.xlsx
-|   |   |   ├── verb.xlsx
-|   |   ├── word.xlsx
-|   |   ├── grammar.xlsx
-|   ├── chinese
-|   ├── chinese.xlsx
+    Anki
+    ├── Excel
+    |   ├── french
+    |   |   ├── word
+    |   |   |   ├── noun.xlsx
+    |   |   |   ├── verb.xlsx
+    |   |   ├── word.xlsx
+    |   |   ├── grammar.xlsx
+    |   ├── chinese
+    |   ├── chinese.xlsx
 
 After exporting anki notes to excel files, you can edit the excel files. You may create, modify, or delete rows. When editing is complete, click Excel -> Anki to import them in. The schedules will be preserved as long as the card id cell was not modified. 
 
