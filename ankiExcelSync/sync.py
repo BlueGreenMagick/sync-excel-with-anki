@@ -521,14 +521,15 @@ tag: %s"""%(''.join(note_tag))
             self.simplelog += "\ntotal %d notes"%totn
             mw.progress.update(label="Deleting redundant files")
 
-            #Delete files if no cards with such tag exist
+            #Delete excel files if no cards with such tag exist
             for f in files:
                 f = f["src"]
                 if f not in exist_file:
-                    os.remove(f)
-                    self.log += "\ndeleted file: %s"%f
-                    relpath = f.replace(dirc,"")
-                    self.simplelog += "\ndeleted file: %s"%relpath
+                    if (f[-5:] == ".xlsx" or ".xlsm") or f[-4:] == ".xls":
+                        os.remove(f)
+                        self.log += "\ndeleted file: %s"%f
+                        relpath = f.replace(dirc,"")
+                        self.simplelog += "\ndeleted file: %s"%relpath
 
             #Finish            
             self.log += "\na2e sync finished at: %s"%datetime.now().isoformat()
