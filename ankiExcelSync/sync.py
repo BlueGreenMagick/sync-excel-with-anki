@@ -522,14 +522,27 @@ tag: %s"""%(''.join(note_tag))
             mw.progress.update(label="Deleting redundant files")
 
             #Delete excel files if no cards with such tag exist
+            to_remove = []
             for f in files:
                 f = f["src"]
                 if f not in exist_file:
                     if f[-5:] == ".xlsx" or f[-5:] == ".xlsm" or f[-4:] == ".xls":
-                        os.remove(f)
-                        self.log += "\ndeleted file: %s"%f
-                        relpath = f.replace(dirc,"")
-                        self.simplelog += "\ndeleted file: %s"%relpath
+                        to_remote.append(f)
+
+                cnfrmtxt = """%d excel files to delete.
+Proceed with deletion?
+"""%(len(to_remove))
+            self.log += ("\n" + cnfrmtxt)
+            cf = confirm_win(cnfrmtxt, default=0)
+            if cf:
+                for f in to_remove:
+                    os.remove(f)
+                    self.log += "\ndeleted file: %s"%f
+                    relpath = f.replace(dirc,"")
+                    self.simplelog += "\ndeleted file: %s"%relpath
+            else:
+                self.simplelog += "File(s) not deleted"
+                self.log += "File(s) not deleted"
 
             #Finish            
             self.log += "\na2e sync finished at: %s"%datetime.now().isoformat()
@@ -543,4 +556,3 @@ tag: %s"""%(''.join(note_tag))
             self.log += "\n" + str(e)
             self.log_output()
             raise e
-
