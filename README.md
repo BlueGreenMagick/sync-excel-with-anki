@@ -7,6 +7,7 @@ Supports only .xlsx files. (Microsoft Excel file)
 Notes **cannot** have more than two tags with selected super-tag. (Super-tag is the top-most level of hierarchical tags. Super-tag of tag `science::physics::var` would be `science`)
 If there are formulas in excel files, the formula itself will be seen as values, not computed values.
 Images put directly into excel files will not be loaded into Anki. Use Anki to put images inside notes.
+Note that All other excel files will be deleted in the directories will be deleted on `Anki -> Excel` sync. It is recommended to sync on a designated empty folder.
 
 ## Setup
 
