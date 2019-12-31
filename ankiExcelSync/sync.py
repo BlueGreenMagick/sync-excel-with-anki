@@ -71,7 +71,7 @@ current_tag:%s
                     """%(dir,high,tag))
 
             for f in files:
-                if (f[-5:] == ".xlsx" or ".xlsm") or f[-4:] == ".xls":
+                if f[-5:] == ".xlsx" or f[-5:] == ".xlsm" or f[-4:] == ".xls":
                     tf = f.split('.')
                     tf.pop()
                     tf = ''.join(tf)
@@ -525,7 +525,7 @@ tag: %s"""%(''.join(note_tag))
             for f in files:
                 f = f["src"]
                 if f not in exist_file:
-                    if (f[-5:] == ".xlsx" or ".xlsm") or f[-4:] == ".xls":
+                    if f[-5:] == ".xlsx" or f[-5:] == ".xlsm" or f[-4:] == ".xls":
                         os.remove(f)
                         self.log += "\ndeleted file: %s"%f
                         relpath = f.replace(dirc,"")
