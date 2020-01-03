@@ -182,6 +182,7 @@ Aborted while in sync. Please sync again after fixing the issue.
             self.log_has_error = True
             self.log += msg
             self.simplelog += msg
+            return None
         
         if '{{cloze:' in note.model()['tmpls'][0]['qfmt']:
             if not mw.col.models._availClozeOrds(
@@ -385,7 +386,8 @@ Proceed?
                             mw.progress.update(label="%d / %d cards updated"%(cnt, add_note_cnt))
                         tag = note_data["tag"]
                         note_id = self.create_note(note_data, tag, decknm)
-                        ef.set_id(note_data["row"], note_data["fields"], note_id)
+                        if note_id != None:
+                            ef.set_id(note_data["row"], note_data["fields"], note_id)
                         cnt += 1
                     ef.save()
                     ef.close()
