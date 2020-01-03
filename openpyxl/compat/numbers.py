@@ -8,10 +8,11 @@ except NameError:
     # Python 3
     long = int
 
-from decimal import Decimal
-
-NUMERIC_TYPES = (int, float, long, Decimal)
-
+try:
+    from decimal import Decimal
+    NUMERIC_TYPES = (int, float, long, Decimal)
+except ImportError:
+    NUMERIC_TYPES = (int, float, long)
 
 try:
     import numpy
