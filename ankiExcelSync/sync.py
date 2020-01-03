@@ -176,9 +176,8 @@ Aborted while in sync. Please sync again after fixing the issue.
         #Check if note is valid, from method aqt.addCards.addNote
         ret = note.dupeOrEmpty()
         if ret == 1:
-            msg = """Non-fatal: Note skipped because first field empty. Please sync again after fixing this issue.
-            From row: %d, file: %s
-            """%(note_data["row"], note_data["path"])
+            msg = """\nNon-fatal: Note skipped because first field empty. Please sync again after fixing this issue.
+            From row: %d, file: %s"""%(note_data["row"], note_data["path"])
             self.log_has_error = True
             self.log += msg
             self.simplelog += msg
@@ -187,18 +186,16 @@ Aborted while in sync. Please sync again after fixing the issue.
         if '{{cloze:' in note.model()['tmpls'][0]['qfmt']:
             if not mw.col.models._availClozeOrds(
                     note.model(), note.joinedFields(), False):
-                msg = """Non-fatal: No cloze exist in cloze note type. Note was still added.
-                From row: %d, file: %s
-                """%(note_data["row"], note_data["path"])
+                msg = """\nNon-fatal: No cloze exist in cloze note type. Note was still added.
+                From row: %d, file: %s"""%(note_data["row"], note_data["path"])
                 self.log_has_error = True
                 self.log += msg
                 self.simplelog += msg
 
         cards = mw.col.addNote(note)
         if not cards:
-            msg = """NON-fatal: No cards are made from this note. Please sync again after fixing this issue.
-            From row: %d, file: %s
-            """%(note_data["row"], note_data["path"])
+            msg = """\nNON-fatal: No cards are made from this note. Please sync again after fixing this issue.
+            From row: %d, file: %s"""%(note_data["row"], note_data["path"])
             self.log += msg
             self.simplelog += msg
             self.log_has_error = True        
@@ -533,8 +530,7 @@ tag: %s"""%(''.join(note_tag))
 
             if to_remove:
                 cnfrmtxt = """%d excel files to delete.
-    Proceed with deletion?
-    """%(len(to_remove))
+Proceed with deletion?"""%(len(to_remove))
                 self.log += ("\n" + cnfrmtxt)
                 cf = confirm_win(cnfrmtxt, default=0)
                 if cf:
@@ -544,8 +540,8 @@ tag: %s"""%(''.join(note_tag))
                         relpath = f.replace(dirc,"")
                         self.simplelog += "\ndeleted file: %s"%relpath
                 else:
-                    self.simplelog += "File(s) not deleted"
-                    self.log += "File(s) not deleted"
+                    self.simplelog += "\nFile(s) not deleted"
+                    self.log += "\nFile(s) not deleted"
 
             #Finish            
             self.log += "\na2e sync finished at: %s"%datetime.now().isoformat()
