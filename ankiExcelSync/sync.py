@@ -527,22 +527,23 @@ tag: %s"""%(''.join(note_tag))
                 f = f["src"]
                 if f not in exist_file:
                     if f[-5:] == ".xlsx" or f[-5:] == ".xlsm" or f[-4:] == ".xls":
-                        to_remote.append(f)
+                        to_remove.append(f)
 
+            if to_remove:
                 cnfrmtxt = """%d excel files to delete.
-Proceed with deletion?
-"""%(len(to_remove))
-            self.log += ("\n" + cnfrmtxt)
-            cf = confirm_win(cnfrmtxt, default=0)
-            if cf:
-                for f in to_remove:
-                    os.remove(f)
-                    self.log += "\ndeleted file: %s"%f
-                    relpath = f.replace(dirc,"")
-                    self.simplelog += "\ndeleted file: %s"%relpath
-            else:
-                self.simplelog += "File(s) not deleted"
-                self.log += "File(s) not deleted"
+    Proceed with deletion?
+    """%(len(to_remove))
+                self.log += ("\n" + cnfrmtxt)
+                cf = confirm_win(cnfrmtxt, default=0)
+                if cf:
+                    for f in to_remove:
+                        os.remove(f)
+                        self.log += "\ndeleted file: %s"%f
+                        relpath = f.replace(dirc,"")
+                        self.simplelog += "\ndeleted file: %s"%relpath
+                else:
+                    self.simplelog += "File(s) not deleted"
+                    self.log += "File(s) not deleted"
 
             #Finish            
             self.log += "\na2e sync finished at: %s"%datetime.now().isoformat()
