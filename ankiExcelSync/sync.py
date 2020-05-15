@@ -510,7 +510,7 @@ Proceed?
             for tag in super_tags:
                 card_ids = mw.col.findCards("tag:" + tag + "::*")
                 card_ids.extend(mw.col.findCards("tag:" + tag))
-                self.log += "\ncard count: %d" % len(card_ids)
+                self.log += "\ntag: %s - card count: %d" % (tag, len(card_ids))
                 for card_id in card_ids:
                     card = mw.col.getCard(card_id)
                     note = card.note()
