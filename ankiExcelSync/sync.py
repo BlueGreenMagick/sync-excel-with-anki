@@ -157,8 +157,11 @@ Please sync again after fixing the issue.
         note.tags += mw.col.tags.canonify([tag])
         note.flush()
 
-    # note_data: {"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name}
     def create_note(self, note_data, tag, decknm):
+        """
+            note_data: {"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name}
+            https://github.com/inevity/addon-movies2anki/blob/master/anki2.1mvaddon/movies2anki/movies2anki.py#L786
+        """
         model_name = note_data["model"]
         model = mw.col.models.byName(model_name)  # Returns None when not exist
         if not model:  # check if model doesn't exist
@@ -231,7 +234,7 @@ Aborted while in sync. Please sync again after fixing the issue.
 
         self.log += "\ncreated note with id %d" % note.id
         return note.id
-        # https://github.com/inevity/addon-movies2anki/blob/master/anki2.1mvaddon/movies2anki/movies2anki.py#L786
+
     def get_remove_cards_id(self, super_tags, note_ids):
         del_ids = []
         for tag in super_tags:
