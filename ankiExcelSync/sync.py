@@ -557,6 +557,7 @@ tag: %s""" % (
                             nids.append(note.id)
                     else:
                         notes[note_tag] = [note]
+                        nids.append(note.id)
             self.log += "\ntag get card done, total tag count: %d" % len(notes)
             self.simplelog += "\ntotal %d tags / files" % len(notes)
             exist_file = []
@@ -571,7 +572,6 @@ tag: %s""" % (
                 dir = os.path.join(dirc, *dir_tree)
                 dir += ".xlsx"
                 exist_file.append(dir)
-
                 # Write to file
                 ef = ExcelFile(dir)
                 ef.create_file()
