@@ -547,6 +547,9 @@ tag: %s""" % (
                                 break
 
                     # tags such as tg::: should become just tg
+                    # TODO: the below code does not seem to achieve above comment?
+                    # and why above comment in the first place?
+                    # filter(None, ...) is shorthand for filter(lambda x: x, ...)
                     note_tag = "::".join(filter(None, note_tag))
                     if note_tag in notes:
                         if note.id not in nids:
