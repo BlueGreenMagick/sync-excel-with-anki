@@ -236,7 +236,7 @@ Aborted while in sync. Please sync again after fixing the issue.
         del_ids = []
         for tag in super_tags:
             card_ids = mw.col.findCards("tag:" + tag + "::*")
-            card_ids += mw.col.findCards("tag:" + tag)
+            card_ids.extend(mw.col.findCards("tag:" + tag))
             for card_id in card_ids:
                 if mw.col.getCard(card_id).nid not in note_ids:
                     del_ids.append(card_id)
@@ -275,6 +275,7 @@ Aborted while in sync. Please sync again after fixing the issue.
 
     def a2e_sync(self):
         self.backup_then_sync(self._a2e_sync)
+
     def compare_notes(self, files, super_tags):
         # Open files and collect all notes
         dirc = self.dirc
@@ -502,7 +503,7 @@ Proceed?
             mw.progress.update(label="Going through all the cards")
             for tag in super_tags:
                 card_ids = mw.col.findCards("tag:" + tag + "::*")
-                card_ids += mw.col.findCards("tag:" + tag)
+                card_ids.extend(mw.col.findCards("tag:" + tag))
                 self.log += "card count: %d" % len(card_ids)
                 for card_id in card_ids:
                     card = mw.col.getCard(card_id)
