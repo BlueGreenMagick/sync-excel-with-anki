@@ -2,14 +2,13 @@ import os
 
 from openpyxl import load_workbook, Workbook
 
-class ExcelFileReadOnly:
 
+class ExcelFileReadOnly:
     def __init__(self, path):
         self.path = path
 
     def load_file(self):
-        self.wb = load_workbook(
-            filename=self.path, read_only=True, data_only=True)
+        self.wb = load_workbook(filename=self.path, read_only=True, data_only=True)
         ws = self.wb.worksheets[0]
         self.ws = ws
         self.wsv = ws.values
@@ -32,7 +31,7 @@ class ExcelFileReadOnly:
 
         # Get name of fields per model
         for n in range(len(models)):
-            for row in ws.iter_rows(min_row=n+2, max_row=n+2):
+            for row in ws.iter_rows(min_row=n + 2, max_row=n + 2):
                 model_fields = []
                 for cell in row[1:]:
                     if cell.value and str(cell.value).strip():
@@ -46,7 +45,7 @@ class ExcelFileReadOnly:
         rows_data = []
 
         # Go through each note rows
-        for row in ws.iter_rows(min_row=2+len(models)):
+        for row in ws.iter_rows(min_row=2 + len(models)):
             model_desg = row[0].value
             if not model_desg:
                 log += ""
@@ -56,26 +55,37 @@ class ExcelFileReadOnly:
                 model_index = models_desg.index(model_desg)
             except:
                 self.close()
-                raise Exception("""ERROR: Invalid note type designator in 
+                raise Exception(
+                    """ERROR: Invalid note type designator in 
 file: %s
 row: %d
 designator: %s
 The sync was stopped mid-way. Please run it again after editing the problem file.
-""" % (self.path, row[0].row, model_desg))
+"""
+                    % (self.path, row[0].row, model_desg)
+                )
             model_name = models[model_index]
             model_fields = models_fields[model_index]
-            nid = row[len(model_fields)+1].value
+            nid = row[len(model_fields) + 1].value
             if nid:
                 try:
                     nid = int(nid)
                 except ValueError:
-                    log += "\n<b>Non-fatal</b>: non integer value '%s' in nid field, in %d row" % (
-                        str(nid), row[0].row)
+                    log += (
+                        "\n<b>Non-fatal</b>: non integer value '%s' in nid field, in %d row"
+                        % (str(nid), row[0].row)
+                    )
                     nid = None
             else:
                 nid = None
-            row_data = {"row": row[0].row, "id": nid, "model": model_name, "fields": {
-            }, "log": log, "path": self.path}  # row is 1 based
+            row_data = {
+                "row": row[0].row,
+                "id": nid,
+                "model": model_name,
+                "fields": {},
+                "log": log,
+                "path": self.path,
+            }  # row is 1 based
             # Get field values
             for i in range(0, len(model_fields)):
                 if row[i + 1].value:
@@ -91,7 +101,6 @@ The sync was stopped mid-way. Please run it again after editing the problem file
 
 
 class ExcelFile(ExcelFileReadOnly):
-
     def load_file(self):
         self.wb = load_workbook(filename=self.path)
         ws = self.wb.worksheets[0]
@@ -99,9 +108,9 @@ class ExcelFile(ExcelFileReadOnly):
         self.wsv = ws.values
 
     def set_id(self, row, fields, id):
-        self.ws.cell(row, len(fields)+2).value = id
-        #cell = self.ws["A" + str(row_num)]
-        #cell.value = id
+        self.ws.cell(row, len(fields) + 2).value = id
+        # cell = self.ws["A" + str(row_num)]
+        # cell.value = id
 
     def create_file(self):
         self.wb = Workbook()
@@ -130,7 +139,7 @@ class ExcelFile(ExcelFileReadOnly):
         for note in notes:
             crow += 1
             model = note.model()
-            val_row = [None]*len(model["flds"])
+            val_row = [None] * len(model["flds"])
             for mdl in models:
                 if mdl["name"] == model["name"]:
                     thismodel = mdl
@@ -142,10 +151,10 @@ class ExcelFile(ExcelFileReadOnly):
                         val_row[m] = note.fields[n]
                         break
             for n in range(len(val_row)):
-                ws.cell(row=crow, column=n+2).value = str(val_row[n])
+                ws.cell(row=crow, column=n + 2).value = str(val_row[n])
             ws.cell(row=crow, column=len(model["flds"]) + 2).value = note.id
         for x in range(len(col_width)):
-            cl = ws.cell(row=1, column=x+1)
+            cl = ws.cell(row=1, column=x + 1)
             if cl:
                 col = cl.column_letter
                 ws.column_dimensions[col].width = col_width[x]
@@ -155,3 +164,4 @@ class ExcelFile(ExcelFileReadOnly):
         if not os.path.exists(dir):
             os.makedirs(dir)
         self.wb.save(filename=self.path)
+
