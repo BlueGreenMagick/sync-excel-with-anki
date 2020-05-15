@@ -49,7 +49,8 @@ class ExcelSync:
         for name in os.listdir(dirc):
             if os.path.isdir(os.path.join(dirc, name)):
                 name = unicodedata.normalize("NFC", name)
-                name = mw.col.tags.canonify([name])[0]
+                # TODO: what will happen if directory contains whitespace?
+                name = " ".join(mw.col.tags.canonify([name])).strip()
                 super_dirs.append(name)
         return super_dirs
 
