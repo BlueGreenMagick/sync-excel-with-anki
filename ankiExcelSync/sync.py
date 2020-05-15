@@ -399,15 +399,16 @@ Proceed?
                 len(del_ids),
             )
             self.log += "\n" + cnfrmtxt
+            mw.progress.finish()
             cf = confirm_win(cnfrmtxt, default=0)
             if not cf:
                 self.simplelog += "\nCancelled e2a sync midway"
                 self.log += "\nCancelled e2a sync midway"
                 self.log_output()
                 self.simplelog_output()
-                mw.progress.finish()
                 return
 
+            mw.progress.start("Excel -> Anki Sync")
             # Update existing notes
             cnt = 0
             for note_data in modify_notes_data:
@@ -499,11 +500,13 @@ Proceed?
             notes = {}  # notes by super tag name
             nids = []
             err_spetags = []
+
             models = self.model_data()
             self.log += "\nmodels done"
 
             # Iterate through each tag and sort notes per tag
             mw.progress.update(label="Going through all the cards")
+
             for tag in super_tags:
                 card_ids = mw.col.findCards("tag:" + tag + "::*")
                 card_ids.extend(mw.col.findCards("tag:" + tag))
@@ -592,7 +595,7 @@ tag: %s""" % (
                 finf += 1
             self.log += "\ntotal notes: %d" % totn
             self.simplelog += "\ntotal %d notes" % totn
-            mw.progress.update(label="Deleting redundant files")
+            mw.progress.update(label="Finding files to delete")
 
             # Delete excel files if no cards with such tag exist
             to_remove = []
@@ -603,6 +606,7 @@ tag: %s""" % (
                         to_remove.append(f)
 
             if to_remove:
+                mw.progress.finish()
                 cnfrmtxt = """%d excel files to delete.
 Proceed with deletion?""" % (
                     len(to_remove)
@@ -610,6 +614,7 @@ Proceed with deletion?""" % (
                 self.log += "\n" + cnfrmtxt
                 cf = confirm_win(cnfrmtxt, default=0)
                 if cf:
+                    mw.progress.start(label="Deleting redundant files")
                     for f in to_remove:
                         os.remove(f)
                         self.log += "\ndeleted file: %s" % f
