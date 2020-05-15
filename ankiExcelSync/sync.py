@@ -496,7 +496,7 @@ Proceed?
             # Get directories
             files, super_tags = self.excel_files_in_dir(dirc)
             totn = 0
-            notes = {}
+            notes = {}  # notes by super tag name
             nids = []
             err_spetags = []
             models = self.model_data()
