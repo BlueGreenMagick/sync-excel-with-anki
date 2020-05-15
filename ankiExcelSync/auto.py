@@ -7,11 +7,12 @@ from .sync import ExcelSync
 def sync_launch(self, onsuccess=None):
     self.loadCollection()
     ExcelSync()._e2a_sync()
-    #from method aqt.AnkiQt.unloadCollection
+    # from method aqt.AnkiQt.unloadCollection
     def callback():
         self.setEnabled(False)
         self._unloadCollection()
         self.aes_old_load_profile(onsuccess)
+
     self.closeAllWindows(callback)
 
 

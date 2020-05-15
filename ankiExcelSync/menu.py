@@ -2,7 +2,8 @@ from PyQt5.QtWidgets import QAction
 from aqt import mw
 from aqt.utils import askUserDialog
 
-def confirm_win(text="", conf = "Yes", canc = "Cancel", default=1):
+
+def confirm_win(text="", conf="Yes", canc="Cancel", default=1):
     diag = askUserDialog(text, [conf, canc])
     diag.setDefault(default)
     ret = diag.run()
@@ -11,12 +12,15 @@ def confirm_win(text="", conf = "Yes", canc = "Cancel", default=1):
     else:
         return False
 
-from .sync import ExcelSync #Prevent circular import
+
+from .sync import ExcelSync  # Prevent circular import
+
 
 def create_action(name, handler):
     action = QAction(name, mw)
     action.triggered.connect(handler)
     return action
+
 
 def confirm_e2a_sync():
     txt = """
@@ -25,7 +29,7 @@ The Anki Cards with selected tags will be replaced by data from Excel.
 
 Anki cards will be overwritten.
 """
-    conf = confirm_win(txt,"Create","Cancel")
+    conf = confirm_win(txt, "Create", "Cancel")
     if conf:
         ExcelSync().e2a_sync()
 
@@ -35,8 +39,8 @@ def confirm_a2e_sync():
 <b>Anki -> Excel</b>
 Excel files will be created from existing Anki Cards with selected tags.
 """
-    conf = confirm_win(txt,"Create","Cancel")
-    
+    conf = confirm_win(txt, "Create", "Cancel")
+
     if conf:
         ExcelSync().a2e_sync()
         cnfg = mw.addonManager.getConfig(__name__)
@@ -50,4 +54,3 @@ def modify_menu():
     label = "Excel -> Anki"
     action = create_action(label, confirm_e2a_sync)
     mw.form.menuTools.addAction(action)
-
