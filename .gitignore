@@ -1,2 +1,3 @@
 meta.json
 user_files/sync.log
+*.pyc
