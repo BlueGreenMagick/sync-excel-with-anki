@@ -585,9 +585,11 @@ tag: %s""" % (
                     ef.close()
                 except Exception as e:
                     self.log += "\nError in file open: %s" % str(e)
+                    self.log += "\n -of file path: %s" % dir
                     ef.close()
                     raise Exception(
-                        "Error occured while creating excel file. \n%s" % str(e)
+                        "Error occured while creating excel file. \nFile path: %s\n%s"
+                        % (dir, str(e))
                     )
 
                 # Logging
