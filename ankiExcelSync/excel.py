@@ -126,13 +126,19 @@ class ExcelFile(ExcelFileReadOnly):
             hd = [model["id"]]
             hd += model["flds"]
             headers.append(hd)
-
+        
         # write headers
         for n in range(len(first_line)):
-            ws.cell(row=1, column=n + 1).value = first_line[n]
+            try:
+                ws.cell(row=1, column=n + 1).value = first_line[n]
+            except Exception as e:
+                e.message +="\nValue: {val}".format({val: first_line[n]}) 
         for n in range(len(headers)):
             for m in range(len(headers[n])):
-                ws.cell(row=n + 2, column=m + 1).value = headers[n][m]
+                try:
+                    ws.cell(row=n + 2, column=m + 1).value = headers[n][m]
+                except Exception as e:
+                    e.message += "\nValue: {val}".format({val: headers[n][m]})
 
         # write notes
         crow = len(headers) + 1  # 1 row before first row of note rows
