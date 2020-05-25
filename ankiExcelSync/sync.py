@@ -409,7 +409,7 @@ Proceed?
                 self.simplelog_output()
                 return
 
-            mw.progress.start("Excel -> Anki Sync")
+            mw.progress.start(label="Excel -> Anki Sync")
             # Update existing notes
             cnt = 0
             for note_data in modify_notes_data:
