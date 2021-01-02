@@ -5,13 +5,17 @@ import re
 from operator import itemgetter
 from datetime import datetime
 
+from anki import version as ankiversion
 from aqt import mw
 from aqt.editor import Editor
 from aqt.utils import showText, tooltip
 
 from .excel import ExcelFile, ExcelFileReadOnly
 from .menu import confirm_win
+from .template import EditorTemplate
 
+ankiver_minor = int(ankiversion.split(".")[2])
+ankiver_major = ankiversion[0:3]
 
 class ExcelSync:
     def __init__(self):
@@ -89,11 +93,19 @@ current_tag:%s
         return (file_list, super_tags)
 
     def prepare_field_val(self, val):
-        txt = urllib.parse.unquote(val)
-        txt = unicodedata.normalize("NFC", txt)
-        txt = Editor.mungeHTML(None, txt)
-        txt = txt.replace("\x00", "")
-        txt = mw.col.media.escapeImages(txt, unescape=True)
+        # from Editor.onBridgeCmd
+        if ankiver_minor <= 19:
+            txt = urllib.parse.unquote(val)
+        if ankiver_minor <= 27:
+            # after v28, normalization optionally occurs when saving note data
+            txt = unicodedata.normalize("NFC", txt)
+        if ankiver_minor <= 29:
+            # after v30, occurs upon calling mungeHtml
+            txt = txt.replace("\x00", "")
+            txt = mw.col.media.escapeImages(txt, unescape=True)
+
+        editor_templ = EditorTemplate() # esp for editor.mw reference
+        txt = Editor.mungeHTML(editor_templ, txt)
         return txt
 
     # Check if note and note_data is the same (fields and tag)
