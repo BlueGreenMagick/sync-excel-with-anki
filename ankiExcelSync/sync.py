@@ -92,10 +92,10 @@ current_tag:%s
                     file_list.append({"src": os.path.join(root, f), "tag": tag_name})
         return (file_list, super_tags)
 
-    def prepare_field_val(self, val):
+    def prepare_field_val(self, txt):
         # from Editor.onBridgeCmd
         if ankiver_minor <= 19:
-            txt = urllib.parse.unquote(val)
+            txt = urllib.parse.unquote(txt)
         if ankiver_minor <= 27:
             # after v28, normalization optionally occurs when saving note data
             txt = unicodedata.normalize("NFC", txt)
