@@ -3,4 +3,4 @@ from aqt.editor import Editor
 
 class EditorTemplate(Editor):
     def __init__(self):
-        self.mw = m
+        self.mw = mw
