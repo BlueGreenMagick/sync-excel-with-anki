@@ -1,12 +1,17 @@
 from anki.hooks import addHook
 from aqt.main import AnkiQt
 from aqt import mw
+from aqt.utils import showText
 from .sync import ExcelSync
 
 
 def sync_launch(self, onsuccess=None):
     self.loadCollection()
-    ExcelSync()._e2a_sync()
+    try:
+        ExcelSync()._e2a_sync()
+    except Exception as e:
+        showText(str(e))
+
     # from method aqt.AnkiQt.unloadCollection
     def callback():
         self.setEnabled(False)
