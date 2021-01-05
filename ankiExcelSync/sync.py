@@ -354,8 +354,8 @@ Aborted while in sync. Please sync again after fixing the issue.
         )
 
     def _e2a_sync(self):
+        mw.progress.start(immediate=True, label="Searching for files")
         try:
-            mw.progress.start(immediate=True, label="Searching for files")
             self.simplelog += "Excel -> Anki"
             self.log += "e2a sync started at %s" % datetime.now().isoformat()
 
@@ -484,7 +484,6 @@ Proceed?
             self.log += "\ne2a sync finished at: %s" % datetime.now().isoformat()
 
             # Finish sync
-            mw.progress.finish()
             mw.reset()
             self.simplelog_output()
             self.log_output()
@@ -493,6 +492,9 @@ Proceed?
             self.log += "ERROR! log:\n" + str(e)
             self.log_output()
             raise e
+        finally:
+            if mw.progress.busy():
+                mw.progress.finish()
 
     def _a2e_sync(self):
         try:
@@ -641,7 +643,6 @@ Proceed with deletion?""" % (
 
             # Finish
             self.log += "\na2e sync finished at: %s" % datetime.now().isoformat()
-            mw.progress.finish()
             mw.reset()
             self.simplelog_output()
             self.log_output()
@@ -651,3 +652,6 @@ Proceed with deletion?""" % (
             self.log += "\n" + str(e)
             self.log_output()
             raise e
+        finally:
+            if mw.progress.busy():
+                mw.progress.finish()
