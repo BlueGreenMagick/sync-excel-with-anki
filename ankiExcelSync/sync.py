@@ -148,8 +148,8 @@ class ExcelSync:
             for super_tag in super_tags:
                 if tag.lower().startswith(super_tag.lower() + "::"):
                     note.tags.remove(tag)
-        tag = unicodedata.normalize("NFC", tag)
-        note.tags += mw.col.tags.canonify([tag])
+        otag = unicodedata.normalize("NFC", otag)
+        note.tags += mw.col.tags.canonify([otag])
         note.flush()
 
     def create_note(self, note_data, tag, decknm):
