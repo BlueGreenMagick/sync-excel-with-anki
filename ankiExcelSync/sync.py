@@ -3,14 +3,13 @@ import unicodedata
 import urllib.parse
 import re
 from operator import itemgetter
-from datetime import datetime
 
 from anki import version as ankiversion
 from aqt import mw
 from aqt.editor import Editor
-from aqt.utils import showText, tooltip
+from aqt.utils import showText
 
-from .excel import ExcelFile, ExcelFileReadOnly
+from .excel import ExcelFile
 from .menu import confirm_win
 from .template import EditorTemplate
 
@@ -20,11 +19,13 @@ ankiver_major = ankiversion[0:3]
 
 class ExcelSync:
     def __init__(self):
-        self.simplelog = ""
+        self.log = []
         self.config = mw.addonManager.getConfig(__name__)
 
-    def simplelog_output(self):
-        showText(self.simplelog, title="Excel Sync Done", minWidth=450, minHeight=300)
+    def show_log(self):
+        showText(
+            "\n".join(self.log), title="Excel Sync Done", minWidth=450, minHeight=300
+        )
 
     def get_super_dirs(self, dirc):
         super_dirs = []
@@ -194,22 +195,20 @@ class ExcelSync:
         # Check if note is valid, from method aqt.addCards.addNote
         ret = note.dupeOrEmpty()
         if ret == 1:
-            msg = "\n".join(
+            self.log.extend(
                 (
                     "Non-fatal: Note skipped because first field is empty."
                     "Please sync again after fixing this issue.",
                     "From row: {}, file: {}".join(note_data["row"], note_data["path"]),
                 )
             )
-
-            self.simplelog += msg
             return None
 
         if "{{cloze:" in note.model()["tmpls"][0]["qfmt"]:
             if not mw.col.models._availClozeOrds(
                 note.model(), note.joinedFields(), False
             ):
-                msg = "\n".join(
+                self.log.extend(
                     (
                         "Non-fatal: No cloze exist in cloze note type.",
                         "Note was still added.",
@@ -218,11 +217,11 @@ class ExcelSync:
                         ),
                     )
                 )
-                self.simplelog += msg
 
         cards = mw.col.addNote(note)
         if not cards:
-            msg = "\n".join(
+
+            self.log.extend(
                 (
                     "NON-fatal: No cards are made from this note.",
                     "Please sync again after fixing this issue.",
@@ -231,8 +230,6 @@ class ExcelSync:
                     ),
                 )
             )
-
-            self.simplelog += msg
 
         return note.id
 
@@ -338,12 +335,12 @@ class ExcelSync:
     def _e2a_sync(self):
         mw.progress.start(immediate=True, label="Searching for files")
         try:
-            self.simplelog += "Excel -> Anki"
+            self.log.append("Excel -> Anki")
 
             # Get value from config
             dirc = self.config["_directory"]
             self.dirc = dirc
-            self.simplelog += "\ndirectory: %s" % dirc
+            self.log.append("directory: %s" % dirc)
             decknm = self.config["new-deck"]
 
             # Check if valid
@@ -367,8 +364,7 @@ class ExcelSync:
             # No need to sync if there are no notes to sync
             if len(modify_notes_data) == 0 and add_note_cnt == 0 and len(del_ids) == 0:
                 mw.progress.finish()
-                self.simplelog += "\nNo note to sync"
-                self.tooltip_log = "No note to sync"
+                self.log.append("No note to sync")
                 return
 
             # Get Confirmation
@@ -384,7 +380,7 @@ class ExcelSync:
             mw.progress.finish()
             cf = confirm_win(cnfrmtxt, default=0)
             if not cf:
-                self.simplelog += "\nCancelled e2a sync midway"
+                self.log.append("Cancelled e2a sync midway")
                 return
 
             mw.progress.start(label="Excel -> Anki Sync")
@@ -432,8 +428,7 @@ class ExcelSync:
             # Delete cards
             mw.col.remCards(del_ids)
 
-            # log
-            logtxt = "\n".join(
+            self.log.extend(
                 (
                     "{} note exist".format(len(exist_note_ids)),
                     "{} notes modified".format(len(modify_notes_data)),
@@ -441,26 +436,22 @@ class ExcelSync:
                     "{} cards deleted".format(len(del_ids)),
                 )
             )
-
-            self.simplelog += logtxt
-
-            # Finish sync
             mw.reset()
         finally:
             if mw.progress.busy():
                 mw.progress.finish()
-            self.simplelog_output()
+            self.show_log()
 
     def _a2e_sync(self):
         try:
             mw.progress.start(immediate=True, label="Looking at directories")
-            self.simplelog += "Anki -> Excel"
+            self.log.append("Anki -> Excel")
 
             # Get value from config
             col_width = self.config["col-width"]
             dirc = self.config["_directory"]
             self.dirc = dirc
-            self.simplelog += "\ndirectory: %s" % dirc
+            self.log.append("directory: %s" % dirc)
 
             # Get directories
             files, super_tags = self.excel_files_in_dir(dirc)
@@ -506,12 +497,13 @@ Aborted sync. No excel files modified."""
                         for t in note_tag:
                             if r.match(t):
                                 err_spetags.append(note_tag)
-                                txt = """\nWARNING: You should avoid use of special characters in tag, 
-as your OS may not support such characters in file path.
-tag: %s""" % (
-                                    "::".join(note_tag)
+                                self.log.extend(
+                                    (
+                                        "WARNING: You should avoid use of special characters in tags,",
+                                        "as your OS may not support such characters in file path.",
+                                        "tag: {}".format("::".join(note_tag)),
+                                    )
                                 )
-                                self.simplelog += txt
                                 break
 
                     # tags such as tg::: should become just tg
@@ -526,7 +518,7 @@ tag: %s""" % (
                     else:
                         notes[note_tag] = [note]
                         nids.append(note.id)
-            self.simplelog += "\ntotal %d tags / files" % len(notes)
+            self.log.append("total %d tags / files" % len(notes))
             exist_file = []
             finf = 0
 
@@ -556,7 +548,7 @@ tag: %s""" % (
                 # Logging
                 totn += len(notes[tag])
                 finf += 1
-            self.simplelog += "\ntotal %d notes" % totn
+            self.log.append("total %d notes" % totn)
             mw.progress.update(label="Finding files to delete")
 
             # Delete excel files if no cards with such tag exist
@@ -581,9 +573,9 @@ tag: %s""" % (
                     for f in to_remove:
                         os.remove(f)
                         relpath = f.replace(dirc, "")
-                        self.simplelog += "\ndeleted file: %s" % relpath
+                        self.log.append("deleted file: %s" % relpath)
                 else:
-                    self.simplelog += "\nFile(s) not deleted"
+                    self.log.append("File(s) not deleted")
 
             # Finish
             mw.reset()
@@ -591,4 +583,4 @@ tag: %s""" % (
         finally:
             if mw.progress.busy():
                 mw.progress.finish()
-            self.simplelog_output()
+            self.show_log()
