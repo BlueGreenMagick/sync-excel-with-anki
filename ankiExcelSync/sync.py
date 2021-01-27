@@ -17,6 +17,7 @@ from .template import EditorTemplate
 ankiver_minor = int(ankiversion.split(".")[2])
 ankiver_major = ankiversion[0:3]
 
+
 class ExcelSync:
     def __init__(self):
         self.log = ""
@@ -74,13 +75,14 @@ class ExcelSync:
 
             if max_loop == 0:
                 raise Exception(
-                    """
-Either you have a really long hierarchical tag, or something went wrong. Maximum level of nested tag is 200. 
-dir:%s
-current_high:%s
-current_tag:%s
-                    """
-                    % (dir, high, tag)
+                    "\n".format(
+                        (
+                            "Either you have a really long hierarchical tag, or something went wrong. Maximum level of nested tag is 200.",
+                            "dir: {}".format(dir),
+                            "current_high: {}".format(high),
+                            "current_tag: {}".format(tag),
+                        )
+                    )
                 )
 
             for f in files:
@@ -104,7 +106,7 @@ current_tag:%s
             txt = txt.replace("\x00", "")
             txt = mw.col.media.escapeImages(txt, unescape=True)
 
-        editor_templ = EditorTemplate() # esp for editor.mw reference
+        editor_templ = EditorTemplate()  # esp for editor.mw reference
         txt = Editor.mungeHTML(editor_templ, txt)
         return txt
 
@@ -115,14 +117,15 @@ current_tag:%s
         for fieldnm in fields:
             if fieldnm not in nflds:
                 raise Exception(
-                    """
-ERROR: Field name does not exist: %s
-in file: %s
-in row: %d
-Aborted while in sync. Some notes were synced while others weren't.
-Please sync again after fixing the issue.
-"""
-                    % (fieldnm, note_data["path"], note_data["row"])
+                    "\n".format(
+                        (
+                            "ERROR: Field name does not exist: {}".format(fieldnm),
+                            "in file: {}".format(note_data["path"]),
+                            "in row: {}".format(note_data["row"]),
+                            "Aborted while in sync. Some notes were synced while others weren't.",
+                            "Please sync again after fixing the issue.",
+                        )
+                    )
                 )
         for fieldnm in fields:
             val = fields[fieldnm]
@@ -145,14 +148,15 @@ Please sync again after fixing the issue.
         for fieldnm in fields:
             if fieldnm not in nflds:
                 raise Exception(
-                    """
-ERROR: Field name does not exist: %s
-in file: %s
-in row: %d
-Aborted while in sync. Some notes were synced while others weren't.
-Please sync again after fixing the issue.
-"""
-                    % (fieldnm, note_data["path"], note_data["row"])
+                    "\n".join(
+                        (
+                            "ERROR: Field name does not exist: {}".format(fieldnm),
+                            "in file: {}".format(note_data["path"]),
+                            "in row: {}".format(note_data["row"]),
+                            "Aborted while in sync. Some notes were synced while others weren't."
+                            "Please sync again after fixing the issue.",
+                        )
+                    )
                 )
         for fieldnm in fields:
             val = fields[fieldnm]
@@ -172,20 +176,22 @@ Please sync again after fixing the issue.
 
     def create_note(self, note_data, tag, decknm):
         """
-            note_data: {"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name}
-            https://github.com/inevity/addon-movies2anki/blob/master/anki2.1mvaddon/movies2anki/movies2anki.py#L786
+        note_data: {"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name}
+        https://github.com/inevity/addon-movies2anki/blob/master/anki2.1mvaddon/movies2anki/movies2anki.py#L786
         """
         model_name = note_data["model"]
         model = mw.col.models.byName(model_name)  # Returns None when not exist
         if not model:  # check if model doesn't exist
             raise Exception(
-                """
-ERROR: Model with this name not found: '%s' 
-in file:%s
-in row: %d
-Aborted while in sync. Please sync again after fixing the issue.
-"""
-                % (model_name, note_data["path"], note_data["row"])
+                "\n".join(
+                    (
+                        "ERROR: Model not found: '{}' ".format(note_data["row"]),
+                        "in file: {}".format(note_data["path"]),
+                        "in row: {}".format(note_data["row"]),
+                        "Aborted while in sync.",
+                        "Please sync again after fixing the issue.",
+                    )
+                )
             )
         mw.col.models.setCurrent(model)
         note = mw.col.newNote(forDeck=False)
@@ -211,11 +217,14 @@ Aborted while in sync. Please sync again after fixing the issue.
         # Check if note is valid, from method aqt.addCards.addNote
         ret = note.dupeOrEmpty()
         if ret == 1:
-            msg = """\nNon-fatal: Note skipped because first field empty. Please sync again after fixing this issue.
-            From row: %d, file: %s""" % (
-                note_data["row"],
-                note_data["path"],
+            msg = "\n".join(
+                (
+                    "Non-fatal: Note skipped because first field is empty."
+                    "Please sync again after fixing this issue.",
+                    "From row: {}, file: {}".join(note_data["row"], note_data["path"]),
+                )
             )
+
             self.log_has_error = True
             self.log += msg
             self.simplelog += msg
@@ -225,10 +234,14 @@ Aborted while in sync. Please sync again after fixing the issue.
             if not mw.col.models._availClozeOrds(
                 note.model(), note.joinedFields(), False
             ):
-                msg = """\nNon-fatal: No cloze exist in cloze note type. Note was still added.
-                From row: %d, file: %s""" % (
-                    note_data["row"],
-                    note_data["path"],
+                msg = "\n".join(
+                    (
+                        "Non-fatal: No cloze exist in cloze note type.",
+                        "Note was still added.",
+                        "From row: {}, file: {}".format(
+                            note_data["row"], note_data["path"]
+                        ),
+                    )
                 )
                 self.log_has_error = True
                 self.log += msg
@@ -236,11 +249,16 @@ Aborted while in sync. Please sync again after fixing the issue.
 
         cards = mw.col.addNote(note)
         if not cards:
-            msg = """\nNON-fatal: No cards are made from this note. Please sync again after fixing this issue.
-            From row: %d, file: %s""" % (
-                note_data["row"],
-                note_data["path"],
+            msg = "\n".join(
+                (
+                    "NON-fatal: No cards are made from this note.",
+                    "Please sync again after fixing this issue.",
+                    "From row: {}, file: {}".format(
+                        note_data["row"], note_data["path"]
+                    ),
+                )
             )
+
             self.log += msg
             self.simplelog += msg
             self.log_has_error = True
@@ -400,16 +418,14 @@ Aborted while in sync. Please sync again after fixing the issue.
                 return
 
             # Get Confirmation
-            cnfrmtxt = """%d notes total,
-%d notes to modify,
-%d notes to add,
-%d cards to delete.
-Proceed?
-""" % (
-                len(exist_note_ids),
-                len(modify_notes_data),
-                add_note_cnt,
-                len(del_ids),
+            cnfrmtxt = "\n".join(
+                (
+                    "{} notes total,".format(len(exist_note_ids)),
+                    "{} notes to modify,".format(len(modify_notes_data)),
+                    "{} notes to add,".format(add_note_cnt),
+                    "{} cards to delete.".format(len(del_ids)),
+                    "Proceed?",
+                )
             )
             self.log += "\n" + cnfrmtxt
             mw.progress.finish()
@@ -468,17 +484,15 @@ Proceed?
             mw.col.remCards(del_ids)
 
             # log
-            logtxt = """
-%d note exist
-%d notes modified
-%d notes created
-%d cards deleted
-""" % (
-                len(exist_note_ids),
-                len(modify_notes_data),
-                add_note_cnt,
-                len(del_ids),
+            logtxt = "\n".join(
+                (
+                    "{} note exist".format(len(exist_note_ids)),
+                    "{} notes modified".format(len(modify_notes_data)),
+                    "{} notes created".format(add_note_cnt),
+                    "{} cards deleted".format(len(del_ids)),
+                )
             )
+
             self.simplelog += logtxt
             self.log += logtxt
             self.log += "\ne2a sync finished at: %s" % datetime.now().isoformat()
@@ -558,7 +572,7 @@ Aborted sync. No excel files modified."""
                                 txt = """\nWARNING: You should avoid use of special characters in tag, 
 as your OS may not support such characters in file path.
 tag: %s""" % (
-                                    "".join(note_tag)
+                                    "::".join(note_tag)
                                 )
                                 self.simplelog += txt
                                 self.log += txt
@@ -624,9 +638,11 @@ tag: %s""" % (
 
             if to_remove:
                 mw.progress.finish()
-                cnfrmtxt = """%d excel files to delete.
-Proceed with deletion?""" % (
-                    len(to_remove)
+                cnfrmtxt = "\n".join(
+                    (
+                        "%d excel files to delete.".format(len(to_remove)),
+                        "Proceed with deletion?",
+                    )
                 )
                 self.log += "\n" + cnfrmtxt
                 cf = confirm_win(cnfrmtxt, default=0)

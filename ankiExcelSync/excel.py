@@ -56,13 +56,17 @@ class ExcelFileReadOnly:
             except:
                 self.close()
                 raise Exception(
-                    """ERROR: Invalid note type designator in 
-file: %s
-row: %d
-designator: %s
-The sync was stopped mid-way. Please run it again after editing the problem file.
-"""
-                    % (self.path, row[0].row, model_desg)
+                    "\n".join(
+                        (
+                            "ERROR: Invalid note type designator in",
+                            f"file: {self.path}",
+                            f"row: {row[0].row}",
+                            f"designator: {model_desg}",
+                            "",
+                            "The sync was stopped mid-way.",
+                            "Please run it again after editing the problem file.",
+                        )
+                    )
                 )
             model_name = models[model_index]
             model_fields = models_fields[model_index]
@@ -126,19 +130,19 @@ class ExcelFile(ExcelFileReadOnly):
             hd = [model["id"]]
             hd += model["flds"]
             headers.append(hd)
-        
+
         # write headers
         for n in range(len(first_line)):
             try:
                 ws.cell(row=1, column=n + 1).value = first_line[n]
             except Exception as e:
-                e.message +="\nValue: {val}".format({val: first_line[n]}) 
+                e.message += "\nValue: {}".format(first_line[n])
         for n in range(len(headers)):
             for m in range(len(headers[n])):
                 try:
                     ws.cell(row=n + 2, column=m + 1).value = headers[n][m]
                 except Exception as e:
-                    e.message += "\nValue: {val}".format({val: headers[n][m]})
+                    e.message += "\nValue: {}".format(headers[n][m])
 
         # write notes
         crow = len(headers) + 1  # 1 row before first row of note rows
@@ -162,12 +166,14 @@ class ExcelFile(ExcelFileReadOnly):
                 ws.cell(row=crow, column=len(model["flds"]) + 2).value = note.id
             except Exception as e:
                 # TODO: fix if exception occurs before thismodel is set
-                e.message += """
-Note Info:
-model: {model}
-field val: {fld}""".format(
-                    {model: thismodel["name"], fld: str(val_row)}
+                e.message += "\n".join(
+                    (
+                        "Note Info:",
+                        "model: {}".format(thismodel['name']),
+                        "field val: {}".format(str(val_row)),
+                    )
                 )
+
         for x in range(len(col_width)):
             cl = ws.cell(row=1, column=x + 1)
             if cl:
