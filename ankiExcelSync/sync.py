@@ -20,34 +20,11 @@ ankiver_major = ankiversion[0:3]
 
 class ExcelSync:
     def __init__(self):
-        self.log = ""
         self.simplelog = ""
         self.config = mw.addonManager.getConfig(__name__)
-        self.log_has_error = False
-        self.tooltip_log = ""
 
     def simplelog_output(self):
-        if self.config["detailed-log"] or self.log_has_error:
-            showText(
-                self.simplelog, title="Excel Sync Done", minWidth=450, minHeight=300
-            )
-        elif self.tooltip_log:
-            tooltip(self.tooltip_log)
-        else:
-            tooltip("Sync succesful")
-
-    def log_output(self):
-        if self.config["log"]:
-            self.log += "\n\n\n"
-            dirc = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-                "user_files",
-            )
-            path = os.path.join(dirc, "sync.log")
-            if not os.path.exists(dirc):
-                os.makedirs(dirc)
-            with open(path, "a+", encoding="utf-8") as file:
-                file.write(self.log)
+        showText(self.simplelog, title="Excel Sync Done", minWidth=450, minHeight=300)
 
     def get_super_dirs(self, dirc):
         super_dirs = []
@@ -225,8 +202,6 @@ class ExcelSync:
                 )
             )
 
-            self.log_has_error = True
-            self.log += msg
             self.simplelog += msg
             return None
 
@@ -243,8 +218,6 @@ class ExcelSync:
                         ),
                     )
                 )
-                self.log_has_error = True
-                self.log += msg
                 self.simplelog += msg
 
         cards = mw.col.addNote(note)
@@ -259,11 +232,8 @@ class ExcelSync:
                 )
             )
 
-            self.log += msg
             self.simplelog += msg
-            self.log_has_error = True
 
-        self.log += "\ncreated note with id %d" % note.id
         return note.id
 
     def get_remove_cards_id(self, super_tags, note_ids):
@@ -329,15 +299,10 @@ class ExcelSync:
                 dt = ef.read_file()
                 ef.close()
             except Exception as e:
-                self.log += "ERROR: cannot read file.\n%s" % str(e)
                 ef.close()
                 raise Exception(str(e))
 
-            relpath = file["src"].replace(dirc, "")
-            self.log += "\n path: %s number of notes: %d" % (relpath, len(dt))
-
             for note_data in dt:
-                self.log += note_data["log"]
                 note_data["tag"] = tag
                 if note_data["id"]:
                     note_id = note_data["id"]
@@ -350,7 +315,6 @@ class ExcelSync:
 
                     # if note with given id doesn't exist
                     else:
-                        self.log += "\ninvalid note id"
                         note_data["exist"] = False
                         add_note_cnt += 1
                         add_notes_data[-1].append(note_data)
@@ -375,15 +339,12 @@ class ExcelSync:
         mw.progress.start(immediate=True, label="Searching for files")
         try:
             self.simplelog += "Excel -> Anki"
-            self.log += "e2a sync started at %s" % datetime.now().isoformat()
 
             # Get value from config
             dirc = self.config["_directory"]
             self.dirc = dirc
-            self.log += "\n%s" % dirc
             self.simplelog += "\ndirectory: %s" % dirc
             decknm = self.config["new-deck"]
-            self.log += "\nto deck: %s" % decknm
 
             # Check if valid
             if dirc == "Z:/Somedirectory you want to save excel files":
@@ -394,8 +355,6 @@ class ExcelSync:
 
             # Get all excel file names and supertags
             files, super_tags = self.excel_files_in_dir(dirc)
-            self.log += "\nnumber of files: %d" % len(files)
-            self.log += "\nsuper tags: %s" % (",".join(super_tags))
 
             (
                 exist_note_ids,
@@ -410,11 +369,6 @@ class ExcelSync:
                 mw.progress.finish()
                 self.simplelog += "\nNo note to sync"
                 self.tooltip_log = "No note to sync"
-                self.simplelog_output()
-                self.log += (
-                    "\nNo note to sync, finish at %s" % datetime.now().isoformat()
-                )
-                self.log_output()
                 return
 
             # Get Confirmation
@@ -427,14 +381,10 @@ class ExcelSync:
                     "Proceed?",
                 )
             )
-            self.log += "\n" + cnfrmtxt
             mw.progress.finish()
             cf = confirm_win(cnfrmtxt, default=0)
             if not cf:
                 self.simplelog += "\nCancelled e2a sync midway"
-                self.log += "\nCancelled e2a sync midway"
-                self.log_output()
-                self.simplelog_output()
                 return
 
             mw.progress.start(label="Excel -> Anki Sync")
@@ -473,7 +423,6 @@ class ExcelSync:
                     ef.save()
                     ef.close()
                 except Exception as e:
-                    self.log += "\nError in updating note id.\n%s" % str(e)
                     ef.close()
                     raise Exception(
                         "Error occured while reading file. File was not saved. Please sync again after fixing the issue.\n%s"
@@ -494,33 +443,23 @@ class ExcelSync:
             )
 
             self.simplelog += logtxt
-            self.log += logtxt
-            self.log += "\ne2a sync finished at: %s" % datetime.now().isoformat()
 
             # Finish sync
             mw.reset()
-            self.simplelog_output()
-            self.log_output()
-        except Exception as e:
-            self.log_has_error = True
-            self.log += "ERROR! log:\n" + str(e)
-            self.log_output()
-            raise e
         finally:
             if mw.progress.busy():
                 mw.progress.finish()
+            self.simplelog_output()
 
     def _a2e_sync(self):
         try:
             mw.progress.start(immediate=True, label="Looking at directories")
             self.simplelog += "Anki -> Excel"
-            self.log += "a2e sync started at: %s" % datetime.now().isoformat()
 
             # Get value from config
             col_width = self.config["col-width"]
             dirc = self.config["_directory"]
             self.dirc = dirc
-            self.log += "\n%s" % dirc
             self.simplelog += "\ndirectory: %s" % dirc
 
             # Get directories
@@ -531,7 +470,6 @@ class ExcelSync:
             err_spetags = []
 
             models = self.model_data()
-            self.log += "\nmodels done"
 
             # Iterate through each tag and sort notes per tag
             mw.progress.update(label="Going through all the cards")
@@ -539,7 +477,6 @@ class ExcelSync:
             for tag in super_tags:
                 card_ids = mw.col.findCards("tag:" + tag + "::*")
                 card_ids.extend(mw.col.findCards("tag:" + tag))
-                self.log += "\ntag: %s - card count: %d" % (tag, len(card_ids))
                 for card_id in card_ids:
                     card = mw.col.getCard(card_id)
                     note = card.note()
@@ -575,7 +512,6 @@ tag: %s""" % (
                                     "::".join(note_tag)
                                 )
                                 self.simplelog += txt
-                                self.log += txt
                                 break
 
                     # tags such as tg::: should become just tg
@@ -590,7 +526,6 @@ tag: %s""" % (
                     else:
                         notes[note_tag] = [note]
                         nids.append(note.id)
-            self.log += "\ntag get card done, total tag count: %d" % len(notes)
             self.simplelog += "\ntotal %d tags / files" % len(notes)
             exist_file = []
             finf = 0
@@ -612,8 +547,6 @@ tag: %s""" % (
                     ef.save()
                     ef.close()
                 except Exception as e:
-                    self.log += "\nError in file open: %s" % str(e)
-                    self.log += "\n -of file path: %s" % dir
                     ef.close()
                     raise Exception(
                         "Error occured while creating excel file. \nFile path: %s\n%s"
@@ -622,9 +555,7 @@ tag: %s""" % (
 
                 # Logging
                 totn += len(notes[tag])
-                self.log += "\ndone dir:%s note-count: %d" % (dir, len(notes[tag]))
                 finf += 1
-            self.log += "\ntotal notes: %d" % totn
             self.simplelog += "\ntotal %d notes" % totn
             mw.progress.update(label="Finding files to delete")
 
@@ -644,30 +575,20 @@ tag: %s""" % (
                         "Proceed with deletion?",
                     )
                 )
-                self.log += "\n" + cnfrmtxt
                 cf = confirm_win(cnfrmtxt, default=0)
                 if cf:
                     mw.progress.start(label="Deleting redundant files")
                     for f in to_remove:
                         os.remove(f)
-                        self.log += "\ndeleted file: %s" % f
                         relpath = f.replace(dirc, "")
                         self.simplelog += "\ndeleted file: %s" % relpath
                 else:
                     self.simplelog += "\nFile(s) not deleted"
-                    self.log += "\nFile(s) not deleted"
 
             # Finish
-            self.log += "\na2e sync finished at: %s" % datetime.now().isoformat()
             mw.reset()
-            self.simplelog_output()
-            self.log_output()
 
-        except Exception as e:
-            self.log_has_error = True
-            self.log += "\n" + str(e)
-            self.log_output()
-            raise e
         finally:
             if mw.progress.busy():
                 mw.progress.finish()
+            self.simplelog_output()
