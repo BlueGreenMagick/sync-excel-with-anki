@@ -121,6 +121,12 @@ class ExcelSync:
         return True
 
     def sync_note(self, note, note_data, otag, super_tags):
+        """
+        note[aqt.notes.Note]: existing note data in Anki
+        note_data[dictionary]: note data in Excel.
+        otag[string]: note_data["tag"]
+        super_tags[list]: names of top level directories(tags) to sync
+        """
         fields = note_data["fields"]
         nflds = note.keys()
         for fieldnm in fields:
@@ -144,6 +150,8 @@ class ExcelSync:
                     note[fieldnm] = val
             else:
                 note[fieldnm] = ""
+
+        # remove target tags and reapply them again
         for tag in note.tags:
             for super_tag in super_tags:
                 if tag.lower().startswith(super_tag.lower() + "::"):
