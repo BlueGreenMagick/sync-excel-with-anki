@@ -147,14 +147,18 @@ class ExcelFile(ExcelFileReadOnly):
         # write notes
         crow = len(headers) + 1  # 1 row before first row of note rows
         for note in notes:
+            crow += 1
+            model = note.model()
+            val_row = [None] * len(model["flds"])
+            thismodel = None
+            for mdl in models:
+                if mdl["name"] == model["name"]:
+                    thismodel = mdl
+                    break
+            if not thismodel:
+                raise Exception("Model {} should exist, but doesn't.".format(model["name"]))      
+                  
             try:
-                crow += 1
-                model = note.model()
-                val_row = [None] * len(model["flds"])
-                for mdl in models:
-                    if mdl["name"] == model["name"]:
-                        thismodel = mdl
-                        break
                 ws.cell(row=crow, column=1).value = str(thismodel["id"])
                 for n in range(len(model["flds"])):
                     for m in range(len(thismodel["flds"])):
@@ -165,7 +169,6 @@ class ExcelFile(ExcelFileReadOnly):
                     ws.cell(row=crow, column=n + 2).value = str(val_row[n])
                 ws.cell(row=crow, column=len(model["flds"]) + 2).value = note.id
             except Exception as e:
-                # TODO: fix if exception occurs before thismodel is set
                 e.message += "\n".join(
                     (
                         "Note Info:",
