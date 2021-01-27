@@ -297,7 +297,7 @@ class ExcelSync:
                 ef.close()
             except Exception as e:
                 ef.close()
-                raise Exception(str(e))
+                raise
 
             for note_data in dt:
                 note_data["tag"] = tag
@@ -421,9 +421,8 @@ class ExcelSync:
                 except Exception as e:
                     ef.close()
                     raise Exception(
-                        "Error occured while reading file. File was not saved. Please sync again after fixing the issue.\n%s"
-                        % str(e)
-                    )
+                        "Error occured while reading file. File was not saved. Please sync again after fixing the issue."
+                    ) from e
 
             # Delete cards
             mw.col.remCards(del_ids)
@@ -543,7 +542,7 @@ Aborted sync. No excel files modified."""
                     raise Exception(
                         "Error occured while creating excel file. \nFile path: %s\n%s"
                         % (dir, str(e))
-                    )
+                    ) from e
 
                 # Logging
                 totn += len(notes[tag])

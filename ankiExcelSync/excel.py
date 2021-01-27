@@ -53,7 +53,7 @@ class ExcelFileReadOnly:
             model_desg = str(model_desg).strip()
             try:
                 model_index = models_desg.index(model_desg)
-            except:
+            except Exception as e:
                 self.close()
                 raise Exception(
                     "\n".join(
@@ -67,7 +67,7 @@ class ExcelFileReadOnly:
                             "Please run it again after editing the problem file.",
                         )
                     )
-                )
+                ) from e
             model_name = models[model_index]
             model_fields = models_fields[model_index]
             nid = row[len(model_fields) + 1].value
@@ -136,13 +136,13 @@ class ExcelFile(ExcelFileReadOnly):
             try:
                 ws.cell(row=1, column=n + 1).value = first_line[n]
             except Exception as e:
-                e.message += "\nValue: {}".format(first_line[n])
+                raise Exception("Errored value: {}".format(first_line[n])) from e
         for n in range(len(headers)):
             for m in range(len(headers[n])):
                 try:
                     ws.cell(row=n + 2, column=m + 1).value = headers[n][m]
                 except Exception as e:
-                    e.message += "\nValue: {}".format(headers[n][m])
+                    raise Exception("Errored value: {}".format(headers[n][m])) from e
 
         # write notes
         crow = len(headers) + 1  # 1 row before first row of note rows
@@ -156,8 +156,10 @@ class ExcelFile(ExcelFileReadOnly):
                     thismodel = mdl
                     break
             if not thismodel:
-                raise Exception("Model {} should exist, but doesn't.".format(model["name"]))      
-                  
+                raise Exception(
+                    "Model {} should exist, but doesn't.".format(model["name"])
+                )
+
             try:
                 ws.cell(row=crow, column=1).value = str(thismodel["id"])
                 for n in range(len(model["flds"])):
@@ -169,13 +171,15 @@ class ExcelFile(ExcelFileReadOnly):
                     ws.cell(row=crow, column=n + 2).value = str(val_row[n])
                 ws.cell(row=crow, column=len(model["flds"]) + 2).value = note.id
             except Exception as e:
-                e.message += "\n".join(
-                    (
-                        "Note Info:",
-                        "model: {}".format(thismodel['name']),
-                        "field val: {}".format(str(val_row)),
+                raise Exception(
+                    "\n".join(
+                        (
+                            "Note Info:",
+                            "model: {}".format(thismodel["name"]),
+                            "field val: {}".format(str(val_row)),
+                        )
                     )
-                )
+                ) from e
 
         for x in range(len(col_width)):
             cl = ws.cell(row=1, column=x + 1)
