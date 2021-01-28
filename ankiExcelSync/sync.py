@@ -576,7 +576,7 @@ Aborted sync. No excel files modified."""
                 mw.progress.finish()
                 cnfrmtxt = "\n".join(
                     (
-                        "%d excel files to delete.".format(len(to_remove)),
+                        "{} excel files to delete.".format(len(to_remove)),
                         "Proceed with deletion?",
                     )
                 )
