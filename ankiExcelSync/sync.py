@@ -24,10 +24,9 @@ class ExcelSync:
         self.config = mw.addonManager.getConfig(__name__)
 
     def show_log(self):
-        diag, box = showText(
-            "\n".join(self.log), title="Excel Sync Done", run=False, minWidth=450, minHeight=300
+        showText(
+            "\n".join(self.log), title="Excel Sync Done", minWidth=450, minHeight=300
         )
-        diag.show()
 
     def output_error(self, exception):
         diag, box = showText(exception.output_message(), run=False, type="html", copyBtn=True, title="Error", minWidth=450, minHeight=300)
