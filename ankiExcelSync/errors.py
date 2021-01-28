@@ -20,7 +20,7 @@ class AnkiExcelError(Exception):
                 "",
                 "Detailed Error Log",
                 "-" * 50,
-                html.escape(traceback.format_exc()),
+                html.escape(traceback.format_exc()).replace('\n', "<br>"),
             )
         )
         return msg + str(self)
