@@ -341,6 +341,7 @@ class ExcelSync:
         )
 
     def _e2a_sync(self):
+        success = True
         try:
             mw.progress.start(immediate=True, label="Searching for files")
             self.log.append("Excel -> Anki")
@@ -444,12 +445,17 @@ class ExcelSync:
                 )
             )
             mw.reset()
+        except Exception as e:
+            success = False
+            raise e
         finally:
             if mw.progress.busy():
                 mw.progress.finish()
-            self.show_log()
+            if success:
+                self.show_log()
 
     def _a2e_sync(self):
+        success = True
         try:
             mw.progress.start(immediate=True, label="Looking at directories")
             self.log.append("Anki -> Excel")
@@ -586,8 +592,11 @@ Aborted sync. No excel files modified."""
 
             # Finish
             mw.reset()
-
+        except Exception as e:
+            success = False
+            raise e
         finally:
             if mw.progress.busy():
                 mw.progress.finish()
-            self.show_log()
+            if success:
+                self.show_log()
