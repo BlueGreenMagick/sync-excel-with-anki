@@ -24,12 +24,14 @@ class ExcelSync:
         self.config = mw.addonManager.getConfig(__name__)
 
     def show_log(self):
-        showText(
-            "\n".join(self.log), title="Excel Sync Done", minWidth=450, minHeight=300
+        diag, box = showText(
+            "\n".join(self.log), title="Excel Sync Done", run=False, minWidth=450, minHeight=300
         )
+        diag.show()
 
     def output_error(self, exception):
-        showText(exception.output_message(), title="Error", minWidth=450, minHeight=300)
+        diag, box = showText(exception.output_message(), run=False, title="Error", minWidth=450, minHeight=300)
+        diag.show()
 
     def get_super_dirs(self, dirc):
         super_dirs = []
