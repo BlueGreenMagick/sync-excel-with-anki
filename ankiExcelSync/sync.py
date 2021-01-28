@@ -10,6 +10,7 @@ from aqt.editor import Editor
 from aqt.utils import showText
 
 from .excel import ExcelFile
+from .errors import *
 from .menu import confirm_win
 from .template import EditorTemplate
 
@@ -26,6 +27,9 @@ class ExcelSync:
         showText(
             "\n".join(self.log), title="Excel Sync Done", minWidth=450, minHeight=300
         )
+
+    def output_error(self, exception):
+        showText(exception.output_message(), title="Error", minWidth=450, minHeight=300)
 
     def get_super_dirs(self, dirc):
         super_dirs = []
@@ -45,23 +49,14 @@ class ExcelSync:
             high = root
             tag = ""
             fol = None
-            max_loop = 200  # fail-safe that shouldn't run, just in case to stop anki from being frozen
+            max_loop = 200  # fail-safe that shouldn't run
             while high != directory and max_loop > 0:
                 high, fol = os.path.split(high)
                 tag = fol + "::" + tag
                 max_loop -= 1
 
             if max_loop == 0:
-                raise Exception(
-                    "\n".format(
-                        (
-                            "Either you have a really long hierarchical tag, or something went wrong. Maximum level of nested tag is 200.",
-                            "dir: {}".format(dir),
-                            "current_high: {}".format(high),
-                            "current_tag: {}".format(tag),
-                        )
-                    )
-                )
+                raise LongDirectoryHierarchyError(root)
 
             for f in files:
                 if f[-5:] == ".xlsx" or f[-5:] == ".xlsm" or f[-4:] == ".xls":
@@ -94,16 +89,8 @@ class ExcelSync:
         nflds = note.keys()
         for fieldnm in fields:
             if fieldnm not in nflds:
-                raise Exception(
-                    "\n".format(
-                        (
-                            "ERROR: Field name does not exist: {}".format(fieldnm),
-                            "in file: {}".format(note_data["path"]),
-                            "in row: {}".format(note_data["row"]),
-                            "Aborted while in sync. Some notes were synced while others weren't.",
-                            "Please sync again after fixing the issue.",
-                        )
-                    )
+                raise FieldNameDoesNotExistError(
+                    note_data["path"], note_data["row"], fieldnm, note.model()["name"]
                 )
         for fieldnm in fields:
             val = fields[fieldnm]
@@ -131,16 +118,8 @@ class ExcelSync:
         nflds = note.keys()
         for fieldnm in fields:
             if fieldnm not in nflds:
-                raise Exception(
-                    "\n".join(
-                        (
-                            "ERROR: Field name does not exist: {}".format(fieldnm),
-                            "in file: {}".format(note_data["path"]),
-                            "in row: {}".format(note_data["row"]),
-                            "Aborted while in sync. Some notes were synced while others weren't."
-                            "Please sync again after fixing the issue.",
-                        )
-                    )
+                raise FieldNameDoesNotExistError(
+                    note_data["path"], note_data["row"], fieldnm, note.model()["name"]
                 )
         for fieldnm in fields:
             val = fields[fieldnm]
@@ -165,20 +144,14 @@ class ExcelSync:
         note_data: {"row":int, "id":int, "fields":{"fieldName":str_val,}, "model": str_model_name}
         https://github.com/inevity/addon-movies2anki/blob/master/anki2.1mvaddon/movies2anki/movies2anki.py#L786
         """
+        fpath = note_data["path"]
+        row = note_data["row"]
         model_name = note_data["model"]
+
         model = mw.col.models.byName(model_name)  # Returns None when not exist
         if not model:  # check if model doesn't exist
-            raise Exception(
-                "\n".join(
-                    (
-                        "ERROR: Model not found: '{}' ".format(note_data["row"]),
-                        "in file: {}".format(note_data["path"]),
-                        "in row: {}".format(note_data["row"]),
-                        "Aborted while in sync.",
-                        "Please sync again after fixing the issue.",
-                    )
-                )
-            )
+            raise ModelNameDoesNotExistError(fpath, model_name)
+
         mw.col.models.setCurrent(model)
         note = mw.col.newNote(forDeck=False)
         # check if fldnm not exist in model
@@ -187,7 +160,7 @@ class ExcelSync:
             "fields"
         ]:  # in different for loop so note data is not partially updated
             if fldnm not in nflds:
-                raise Exception("Field name does not exist: %s" % fldnm)
+                raise FieldNameDoesNotExistError(fpath, row, fldnm, model_name)
         for fldnm in note_data["fields"]:
             fldval = note_data["fields"][fldnm]
             if not fldval:  # convert NoneType to string
@@ -354,10 +327,9 @@ class ExcelSync:
 
             # Check if valid
             if dirc == "Z:/Somedirectory you want to save excel files":
-                msg = "ERROR: You need to set the directory for your excel files, in addon config.\nSync aborted"
-                raise Exception(msg)
+                raise DidNotConfigureDirectoryError()
             if not mw.col.decks.byName(decknm):
-                raise Exception("ERROR: No deck exists with name %s" % decknm)
+                raise DeckNameDoesNotExistError(decknm)
 
             # Get all excel file names and supertags
             files, super_tags = self.excel_files_in_dir(dirc)
@@ -426,12 +398,8 @@ class ExcelSync:
                             ef.set_id(note_data["row"], note_data["fields"], note_id)
                         cnt += 1
                     ef.save()
+                finally:
                     ef.close()
-                except Exception as e:
-                    ef.close()
-                    raise Exception(
-                        "Error occured while reading file. File was not saved. Please sync again after fixing the issue."
-                    ) from e
 
             # Delete cards
             mw.col.remCards(del_ids)
@@ -445,9 +413,15 @@ class ExcelSync:
                 )
             )
             mw.reset()
+
+        except AnkiExcelError as e:
+            success = False
+            self.output_error(e)
+
         except Exception as e:
             success = False
             raise e
+        
         finally:
             if mw.progress.busy():
                 mw.progress.finish()
@@ -484,22 +458,13 @@ class ExcelSync:
                 for card_id in card_ids:
                     card = mw.col.getCard(card_id)
                     note = card.note()
-                    if len(note.tags) == 1:
-                        note_tag = note.tags[0]
-                    else:
-                        tc = 0
-                        for t in note.tags:
-                            for tt in super_tags:
-                                if t.startswith(tt + "::") or t == tt:
-                                    note_tag = t
-                                    tc += 1
-                        if tc > 1:
-                            tstr = ",".join(note.tags)
-                            raise Exception(
-                                """More than one selected super-tag: %s 
-Aborted sync. No excel files modified."""
-                                % tstr
-                            )
+                    note_tag = None
+                    for t in note.tags:
+                        for tt in super_tags:
+                            if t.startswith(tt + "::") or t == tt:
+                                if note_tag is not None:
+                                    raise MultipleSuperTagError(note)
+                                note_tag = t
 
                     note_tag = str(note_tag)
                     note_tag = note_tag.split("::")
@@ -550,13 +515,8 @@ Aborted sync. No excel files modified."""
                 try:
                     ef.write(notes[tag], models, col_width)
                     ef.save()
+                finally:
                     ef.close()
-                except Exception as e:
-                    ef.close()
-                    raise Exception(
-                        "Error occured while creating excel file. \nFile path: %s\n%s"
-                        % (dir, str(e))
-                    ) from e
 
                 # Logging
                 totn += len(notes[tag])
@@ -592,9 +552,15 @@ Aborted sync. No excel files modified."""
 
             # Finish
             mw.reset()
+
+        except AnkiExcelError as e:
+            success = False
+            self.output_error(e)
+
         except Exception as e:
             success = False
             raise e
+
         finally:
             if mw.progress.busy():
                 mw.progress.finish()

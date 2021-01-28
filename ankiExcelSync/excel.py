@@ -1,5 +1,6 @@
 import os
 
+from .errors import *
 from openpyxl import load_workbook, Workbook
 
 
@@ -55,18 +56,8 @@ class ExcelFileReadOnly:
                 model_index = models_desg.index(model_desg)
             except Exception as e:
                 self.close()
-                raise Exception(
-                    "\n".join(
-                        (
-                            "ERROR: Invalid note type designator in",
-                            f"file: {self.path}",
-                            f"row: {row[0].row}",
-                            f"designator: {model_desg}",
-                            "",
-                            "The sync was stopped mid-way.",
-                            "Please run it again after editing the problem file.",
-                        )
-                    )
+                raise InvalidModelDesignatorError(
+                    self.path, row[0].row, model_desg
                 ) from e
             model_name = models[model_index]
             model_fields = models_fields[model_index]
@@ -112,7 +103,7 @@ class ExcelFile(ExcelFileReadOnly):
         self.wsv = ws.values
 
     def set_id(self, row, fields, id):
-        self.ws.cell(row, len(fields) + 2).value = id
+        self.write_cell(row, len(fields) + 2, id)
         # cell = self.ws["A" + str(row_num)]
         # cell.value = id
 
@@ -120,6 +111,12 @@ class ExcelFile(ExcelFileReadOnly):
         self.wb = Workbook()
         self.ws = self.wb.worksheets[0]
         self.ws.title = "Anki Cards"
+
+    def write_cell(self, row, col, val):
+        try:
+            self.ws.cell(row=row, column=col).value = val
+        except Exception as e:
+            raise CannotWriteValueError(self.path, row, col, val) from e
 
     def write(self, notes, models, col_width):
         ws = self.ws
@@ -133,16 +130,10 @@ class ExcelFile(ExcelFileReadOnly):
 
         # write headers
         for n in range(len(first_line)):
-            try:
-                ws.cell(row=1, column=n + 1).value = first_line[n]
-            except Exception as e:
-                raise Exception("Errored value: {}".format(first_line[n])) from e
+            self.write_cell(1, n + 1, first_line[n])
         for n in range(len(headers)):
             for m in range(len(headers[n])):
-                try:
-                    ws.cell(row=n + 2, column=m + 1).value = headers[n][m]
-                except Exception as e:
-                    raise Exception("Errored value: {}".format(headers[n][m])) from e
+                self.write_cell(n + 2, m + 1, headers[n][m])
 
         # write notes
         crow = len(headers) + 1  # 1 row before first row of note rows
@@ -156,30 +147,17 @@ class ExcelFile(ExcelFileReadOnly):
                     thismodel = mdl
                     break
             if not thismodel:
-                raise Exception(
-                    "Model {} should exist, but doesn't.".format(model["name"])
-                )
+                raise ModelNameDoesNotExistError(model["name"])
 
-            try:
-                ws.cell(row=crow, column=1).value = str(thismodel["id"])
-                for n in range(len(model["flds"])):
-                    for m in range(len(thismodel["flds"])):
-                        if thismodel["flds"][m] == model["flds"][n]["name"]:
-                            val_row[m] = note.fields[n]
-                            break
-                for n in range(len(val_row)):
-                    ws.cell(row=crow, column=n + 2).value = str(val_row[n])
-                ws.cell(row=crow, column=len(model["flds"]) + 2).value = note.id
-            except Exception as e:
-                raise Exception(
-                    "\n".join(
-                        (
-                            "Note Info:",
-                            "model: {}".format(thismodel["name"]),
-                            "field val: {}".format(str(val_row)),
-                        )
-                    )
-                ) from e
+            self.write_cell(crow, 1, str(thismodel["id"]))
+            for n in range(len(model["flds"])):
+                for m in range(len(thismodel["flds"])):
+                    if thismodel["flds"][m] == model["flds"][n]["name"]:
+                        val_row[m] = note.fields[n]
+                        break
+            for n in range(len(val_row)):
+                self.write_cell(crow, n + 2, str(val_row[n]))
+            self.write_cell(crow, len(model["flds"]) + 2, note.id)
 
         for x in range(len(col_width)):
             cl = ws.cell(row=1, column=x + 1)
