@@ -1,9 +1,10 @@
 from re import L
 import traceback
+import html
 
 class AnkiExcelError(Exception):
     def output_message(self):
-        msg = "\n".join(
+        msg = "<br>".join(
             (
                 "<b>ERROR:</b>"
                 "An error occured during sync.",
@@ -14,7 +15,7 @@ class AnkiExcelError(Exception):
                 "",
                 "Detailed Error Log"
                 "-"*30,
-                traceback.format_exc()
+                html.escape(traceback.format_exc())
 
 
             )
@@ -31,12 +32,12 @@ class InvalidModelDesignatorError(AnkiExcelError):
          cannot be found on the headers row
         """
         super().__init__()
-        self.filepath = filepath
+        self.filepath = html.escape(filepath)
         self.row = row
-        self.value = value
+        self.value = html.escape(value)
 
     def __str__(self):
-        msg = "\n".join(
+        msg = "<br>".join(
             (
                 "ERROR: Invalid note type designator in",
                 f"file: {self.filepath}",
@@ -59,13 +60,13 @@ class CannotWriteValueError(AnkiExcelError):
 
     def __init__(self, filepath, row, col, value):
         super().__init__()
-        self.filepath = filepath
+        self.filepath = html.escape(filepath)
         self.row = row
         self.col = col
-        self.value = value
+        self.value = html.escape(value)
 
     def __str__(self):
-        msg = "\n".join(
+        msg = "<br>".join(
             (
                 "ERROR: Could not write value to file",
                 f"file: {self.filepath}",
@@ -87,10 +88,10 @@ class LongDirectoryHierarchyError(AnkiExcelError):
 
         """
         super().__init__()
-        self.dir = dir
+        self.dir = html.escape(dir)
 
     def __str__(self):
-        msg = "\n".format(
+        msg = "<br>".format(
             (
                 "Either you have a really long hierarchical tag, or something went wrong.",
                 "Maximum level of nested tag(directory) is 200.",
@@ -103,11 +104,11 @@ class LongDirectoryHierarchyError(AnkiExcelError):
 class ModelNameDoesNotExistError(AnkiExcelError):
     def __init__(self, file_path, model_name):
         super().__init__()
-        self.file_path = file_path
-        self.model_name = model_name
+        self.file_path = html.escape(file_path)
+        self.model_name = html.escape(model_name)
 
     def __str__(self):
-        msg = "\n".join(
+        msg = "<br>".join(
             (
                 "ERROR: Could not find note type with given name.",
                 "Note type: {}".format(self.model_name),
@@ -120,13 +121,13 @@ class ModelNameDoesNotExistError(AnkiExcelError):
 class FieldNameDoesNotExistError(AnkiExcelError):
     def __init__(self, filepath, row, field_name, note_type):
         super.__init__()
-        self.filepath = filepath
+        self.filepath = html.escape(filepath)
         self.row = row
-        self.field_name = field_name
-        self.note_type = note_type
+        self.field_name = html.escape(field_name)
+        self.note_type = html.escape(note_type)
 
     def __str__(self) -> str:
-        msg = "\n".format(
+        msg = "<br>".format(
             (
                 "ERROR: Field name does not exist.",
                 "Field name: {}".format(self.field_name),
@@ -143,10 +144,10 @@ class FieldNameDoesNotExistError(AnkiExcelError):
 class DeckNameDoesNotExistError(AnkiExcelError):
     def __init__(self, deck_name):
         super.__init__()
-        self.deck_name = deck_name
+        self.deck_name = html.escape(deck_name)
 
     def __str__(self) -> str:
-        msg = "\n".format(
+        msg = "<br>".format(
             (
                 "ERROR: Deck does not exist.",
                 "Deck name: {}".format(self.deck_name),
@@ -159,21 +160,22 @@ class DeckNameDoesNotExistError(AnkiExcelError):
 
 class MultipleSuperTagError(AnkiExcelError):
     def __init__(self, note):
-        self.note = note
+        self.id = note.id
+        self.tags = html.escape(self.tags)
 
     def __str__(self):
-        msg = "\n".join(
+        msg = "<br>".join(
             (
                 "Note has multiple super tags.",
-                "nids: {}".format(self.note.id),
-                "tags: {}".format(self.note.tags),
+                "nids: {}".format(self.id),
+                "tags: {}".format(self.tags),
             )
         )
 
 
 class DidNotConfigureDirectoryError(AnkiExcelError):
     def __str__(self):
-        msg = "\n".format(
+        msg = "<br>".format(
             (
                 "ERROR: You need to set the '_directory' in addon config.",
                 "to the directory your excel files reside in.",

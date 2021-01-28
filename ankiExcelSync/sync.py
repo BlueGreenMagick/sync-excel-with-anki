@@ -30,7 +30,7 @@ class ExcelSync:
         diag.show()
 
     def output_error(self, exception):
-        diag, box = showText(exception.output_message(), run=False, title="Error", minWidth=450, minHeight=300)
+        diag, box = showText(exception.output_message(), run=False, type="html", copyBtn=True, title="Error", minWidth=450, minHeight=300)
         diag.show()
 
     def get_super_dirs(self, dirc):
