@@ -341,8 +341,8 @@ class ExcelSync:
         )
 
     def _e2a_sync(self):
-        mw.progress.start(immediate=True, label="Searching for files")
         try:
+            mw.progress.start(immediate=True, label="Searching for files")
             self.log.append("Excel -> Anki")
 
             # Get value from config
