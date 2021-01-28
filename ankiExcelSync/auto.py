@@ -3,6 +3,7 @@ from aqt.main import AnkiQt
 from aqt import mw
 from aqt.utils import showText
 from .sync import ExcelSync
+from .menu import confirm_a2e_sync
 
 
 def sync_launch(self, onsuccess=None):
@@ -22,7 +23,7 @@ def sync_launch(self, onsuccess=None):
 
 
 def sync_close():
-    ExcelSync().a2e_sync()
+    confirm_a2e_sync()
 
 
 def onlaunch():
