@@ -3,7 +3,7 @@ from aqt import mw
 from aqt.utils import askUserDialog
 
 
-def confirm_win(text="", conf="Yes", canc="Cancel", default=1):
+def confirm_win(text="", conf="Yes", canc="Cancel", default=0):
     diag = askUserDialog(text, [conf, canc])
     diag.setDefault(default)
     ret = diag.run()
