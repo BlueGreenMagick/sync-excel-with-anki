@@ -6,14 +6,14 @@ class AnkiExcelError(Exception):
     def output_message(self):
         msg = "<br>".join(
             (
-                "<b>ERROR:</b>"
+                "<b>ERROR!</b>",
                 "An error occured during sync.",
-                "Depending on the error, some notes may have been synced while others weren't."
+                "Depending on the error, some notes may have been synced while others weren't.",
                 "Please sync again after fixing the issue.",
                 "",
                 str(self),
                 "",
-                "Detailed Error Log"
+                "Detailed Error Log",
                 "-"*30,
                 html.escape(traceback.format_exc())
 
