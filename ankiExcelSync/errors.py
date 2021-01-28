@@ -2,6 +2,7 @@ from re import L
 import traceback
 import html
 
+
 class AnkiExcelError(Exception):
     def output_message(self):
         msg = "<br>".join(
@@ -11,13 +12,15 @@ class AnkiExcelError(Exception):
                 "Depending on the error, some notes may have been synced while others weren't.",
                 "Please sync again after fixing the issue.",
                 "",
+                "",
+                "Error Log",
+                "-" * 50,
                 str(self),
                 "",
+                "",
                 "Detailed Error Log",
-                "-"*30,
-                html.escape(traceback.format_exc())
-
-
+                "-" * 50,
+                html.escape(traceback.format_exc()),
             )
         )
         return msg + str(self)
