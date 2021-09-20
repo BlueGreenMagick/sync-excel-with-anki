@@ -34,10 +34,10 @@ class InvalidModelDesignatorError(AnkiExcelError):
         Model designator on notes row
          cannot be found on the headers row
         """
-        super().__init__()
         self.filepath = html.escape(filepath)
         self.row = row
         self.value = html.escape(value)
+        super().__init__(str(self))
 
     def __str__(self):
         msg = "<br>".join(
@@ -62,11 +62,11 @@ class CannotWriteValueError(AnkiExcelError):
     """
 
     def __init__(self, filepath, row, col, value):
-        super().__init__()
         self.filepath = html.escape(filepath)
         self.row = row
         self.col = col
         self.value = html.escape(value)
+        super().__init__(str(self))
 
     def __str__(self):
         msg = "<br>".join(
@@ -90,8 +90,8 @@ class LongDirectoryHierarchyError(AnkiExcelError):
         dir --- current directory
 
         """
-        super().__init__()
         self.dir = html.escape(dir)
+        super().__init__(str(self))
 
     def __str__(self):
         msg = "<br>".format(
@@ -106,9 +106,9 @@ class LongDirectoryHierarchyError(AnkiExcelError):
 
 class ModelNameDoesNotExistError(AnkiExcelError):
     def __init__(self, file_path, model_name):
-        super().__init__()
         self.file_path = html.escape(file_path)
         self.model_name = html.escape(model_name)
+        super().__init__(str(self))
 
     def __str__(self):
         msg = "<br>".join(
@@ -123,11 +123,11 @@ class ModelNameDoesNotExistError(AnkiExcelError):
 
 class FieldNameDoesNotExistError(AnkiExcelError):
     def __init__(self, filepath, row, field_name, note_type):
-        super.__init__()
         self.filepath = html.escape(filepath)
         self.row = row
         self.field_name = html.escape(field_name)
         self.note_type = html.escape(note_type)
+        super().__init__(str(self))
 
     def __str__(self) -> str:
         msg = "<br>".format(
@@ -146,8 +146,8 @@ class FieldNameDoesNotExistError(AnkiExcelError):
 
 class DeckNameDoesNotExistError(AnkiExcelError):
     def __init__(self, deck_name):
-        super.__init__()
         self.deck_name = html.escape(deck_name)
+        super().__init__(str(self))
 
     def __str__(self) -> str:
         msg = "<br>".format(
@@ -165,6 +165,7 @@ class MultipleSuperTagError(AnkiExcelError):
     def __init__(self, note):
         self.id = note.id
         self.tags = html.escape(self.tags)
+        super().__init__(str(self))
 
     def __str__(self):
         msg = "<br>".join(
@@ -177,6 +178,9 @@ class MultipleSuperTagError(AnkiExcelError):
 
 
 class DidNotConfigureDirectoryError(AnkiExcelError):
+    def __init__(self):
+        super().__init__(str(self))
+
     def __str__(self):
         msg = "<br>".format(
             (
