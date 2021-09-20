@@ -1,4 +1,7 @@
 meta.json
 user_files/sync.log
+*.ankiaddon
+
 *.pyc
 TEST/
+.vscode
