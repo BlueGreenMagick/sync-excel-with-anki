@@ -85,7 +85,7 @@ class CannotWriteValueError(AnkiExcelError):
 
 
 class LongDirectoryHierarchyError(AnkiExcelError):
-    def __init__(self, tag, dir):
+    def __init__(self, dir):
         """
         dir --- current directory
 
