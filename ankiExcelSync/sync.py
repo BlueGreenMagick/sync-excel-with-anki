@@ -1,10 +1,10 @@
 import os
 import unicodedata
-import urllib.parse
 import re
 from operator import itemgetter
 
-from anki import version as ankiversion
+from anki.decks import DeckId
+from anki.notes import NoteFieldsCheckResult
 from aqt import mw
 from aqt.editor import Editor
 from aqt.utils import showText
@@ -13,9 +13,6 @@ from .excel import ExcelFile
 from .errors import *
 from .menu import confirm_win
 from .template import EditorTemplate
-
-ankiver_minor = int(ankiversion.split(".")[2])
-ankiver_major = ankiversion[0:3]
 
 
 class ExcelSync:
@@ -78,18 +75,7 @@ class ExcelSync:
         return (file_list, super_tags)
 
     def prepare_field_val(self, txt):
-        # from Editor.onBridgeCmd
-        if ankiver_minor <= 19:
-            txt = urllib.parse.unquote(txt)
-        if ankiver_minor <= 27:
-            # after v28, normalization optionally occurs when saving note data
-            txt = unicodedata.normalize("NFC", txt)
-        if ankiver_minor <= 29:
-            # after v30, occurs upon calling mungeHtml
-            txt = txt.replace("\x00", "")
-            txt = mw.col.media.escapeImages(txt, unescape=True)
-
-        editor_templ = EditorTemplate()  # esp for editor.mw reference
+        editor_templ = EditorTemplate()
         txt = Editor.mungeHTML(editor_templ, txt)
         return txt
 
@@ -147,7 +133,7 @@ class ExcelSync:
                     note.tags.remove(tag)
         otag = unicodedata.normalize("NFC", otag)
         note.tags += mw.col.tags.canonify([otag])
-        note.flush()
+        mw.col.update_note(note)
 
     def create_note(self, note_data, tag, decknm):
         """
@@ -158,12 +144,11 @@ class ExcelSync:
         row = note_data["row"]
         model_name = note_data["model"]
 
-        model = mw.col.models.byName(model_name)  # Returns None when not exist
+        model = mw.col.models.by_name(model_name)  # Returns None when not exist
         if not model:  # check if model doesn't exist
             raise ModelNameDoesNotExistError(fpath, model_name)
 
-        mw.col.models.setCurrent(model)
-        note = mw.col.newNote(forDeck=False)
+        note = mw.col.new_note(model)
         # check if fldnm not exist in model
         nflds = note.keys()
         for fldnm in note_data[
@@ -178,40 +163,33 @@ class ExcelSync:
             note[fldnm] = fldval
         tag = unicodedata.normalize("NFC", tag)
         note.tags = mw.col.tags.canonify([tag])
-        did = mw.col.decks.byName(decknm)[
-            "id"
-        ]  # decknm is already validated in a2e_sync
-        note.model()["did"] = did
+        did = DeckId(mw.col.decks.by_name(decknm)["id"])  # decknm is already validated in a2e_sync
 
         # Check if note is valid, from method aqt.addCards.addNote
-        ret = note.dupeOrEmpty()
-        if ret == 1:
+        ret = note.fields_check()
+        if ret == NoteFieldsCheckResult.EMPTY:
             self.log.extend(
                 (
                     "Non-fatal: Note skipped because first field is empty."
                     "Please sync again after fixing this issue.",
-                    "From row: {}, file: {}".join(note_data["row"], note_data["path"]),
+                    "From row: {}, file: {}".format(note_data["row"], note_data["path"]),
                 )
             )
             return None
 
-        if "{{cloze:" in note.model()["tmpls"][0]["qfmt"]:
-            if not mw.col.models._availClozeOrds(
-                note.model(), note.joinedFields(), False
-            ):
-                self.log.extend(
-                    (
-                        "Non-fatal: No cloze exist in cloze note type.",
-                        "Note was still added.",
-                        "From row: {}, file: {}".format(
-                            note_data["row"], note_data["path"]
-                        ),
-                    )
+        if ret == NoteFieldsCheckResult.MISSING_CLOZE:
+            self.log.extend(
+                (
+                    "Non-fatal: No cloze exist in cloze note type.",
+                    "Note was still added.",
+                    "From row: {}, file: {}".format(
+                        note_data["row"], note_data["path"]
+                    ),
                 )
+            )
 
-        cards = mw.col.addNote(note)
-        if not cards:
-
+        out = mw.col.add_note(note, did)
+        if not out.count:
             self.log.extend(
                 (
                     "NON-fatal: No cards are made from this note.",
@@ -227,10 +205,10 @@ class ExcelSync:
     def get_remove_cards_id(self, super_tags, note_ids):
         del_ids = []
         for tag in super_tags:
-            card_ids = mw.col.findCards("tag:" + tag + "::*")
-            card_ids.extend(mw.col.findCards("tag:" + tag))
+            card_ids = mw.col.find_cards("tag:" + tag + "::*")
+            card_ids.extend(mw.col.find_cards("tag:" + tag))
             for card_id in card_ids:
-                if mw.col.getCard(card_id).nid not in note_ids:
+                if mw.col.get_card(card_id).nid not in note_ids:
                     del_ids.append(card_id)
         return del_ids
 
@@ -238,7 +216,7 @@ class ExcelSync:
         models_all = mw.col.models.all()
         models = []
         for mdl in models_all:
-            mdlcount = mw.col.models.useCount(mdl)
+            mdlcount = mw.col.models.use_count(mdl)
             fields = []
             for fld in mdl["flds"]:
                 fields.append(fld["name"])
@@ -294,8 +272,8 @@ class ExcelSync:
                 note_data["tag"] = tag
                 if note_data["id"]:
                     note_id = note_data["id"]
-                    if mw.col.findNotes("nid:%s" % note_id):
-                        note = mw.col.getNote(note_id)
+                    if mw.col.find_notes("nid:%s" % note_id):
+                        note = mw.col.get_note(note_id)
                         note_data["exist"] = True
                         exist_note_ids.append(note_id)
                         if not self.same_note(note, note_data, tag, super_tags):
@@ -338,7 +316,7 @@ class ExcelSync:
             # Check if valid
             if dirc == "Z:/Somedirectory you want to save excel files":
                 raise DidNotConfigureDirectoryError()
-            if not mw.col.decks.byName(decknm):
+            if not mw.col.decks.by_name(decknm):
                 raise DeckNameDoesNotExistError(decknm)
 
             # Get all excel file names and supertags
@@ -385,7 +363,7 @@ class ExcelSync:
                     )
                 note_id = note_data["id"]
                 tag = note_data["tag"]
-                note = mw.col.getNote(note_id)
+                note = mw.col.get_note(note_id)
                 self.sync_note(note, note_data, tag, super_tags)
                 cnt += 1
 
@@ -412,7 +390,7 @@ class ExcelSync:
                     ef.close()
 
             # Delete cards
-            mw.col.remCards(del_ids)
+            mw.col.remove_cards_and_orphaned_notes(del_ids)
 
             self.log.extend(
                 (
@@ -463,10 +441,10 @@ class ExcelSync:
             mw.progress.update(label="Going through all the cards")
 
             for tag in super_tags:
-                card_ids = mw.col.findCards("tag:" + tag + "::*")
-                card_ids.extend(mw.col.findCards("tag:" + tag))
+                card_ids = mw.col.find_cards("tag:" + tag + "::*")
+                card_ids.extend(mw.col.find_cards("tag:" + tag))
                 for card_id in card_ids:
-                    card = mw.col.getCard(card_id)
+                    card = mw.col.get_card(card_id)
                     note = card.note()
                     note_tag = None
                     for t in note.tags:

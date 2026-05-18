@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QAction
+from aqt.qt import QAction
 from aqt import mw
 from aqt.utils import askUserDialog
 
