@@ -1,0 +1,40 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: version string (eg. 6.1)
+        required: true
+
+jobs:
+  create-release:
+    name: Version ${{ github.event.inputs.version }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      ADDON_NAME: Anki Excel Sync
+      # Path of addon root in repo.
+      ADDON_ROOT: '.'
+      ADDON_FILE_NAME: anki_excel_sync_v${{ github.event.inputs.version }}.ankiaddon
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Create ankiaddon file
+        run: |
+          base_path="$PWD"
+          cd "${{ env.ADDON_ROOT }}"
+          zip -r "$base_path/${{ env.ADDON_FILE_NAME }}" *  -x "__pycache__/*"
+          cd "$base_path"
+
+      - name: Create github release and upload ankiaddon file
+        uses: svenstaro/upload-release-action@29e53e917877a24fad85510ded594ab3c9ca12de # v2.11.5
+        with:
+          repo_token: ${{ github.token }}
+          file: ${{ env.ADDON_FILE_NAME }}
+          tag: ${{ github.event.inputs.version }}
+          release_name: ${{ env.ADDON_NAME }} v${{ github.event.inputs.version }}
